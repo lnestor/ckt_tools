@@ -15,7 +15,6 @@ class Node:
         self.output = output
         self.inputs = inputs
         self.type = type
-        self.depth = 0
 
     def __eq__(self, other):
         if isinstance(self, other.__class__):

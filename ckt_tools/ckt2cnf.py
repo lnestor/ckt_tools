@@ -1,7 +1,7 @@
-import argparse
 from pyverilog.vparser.parser import parse
 import z3
 
+from arg_parser import get_filename
 from ast_parser import parse_ast
 from z3_builder import Z3Builder
 
@@ -44,14 +44,6 @@ def measure_metrics(z3_ckt):
     print("Max number of clauses: " + str(max(num_clauses)))
     print("Average number of variables: " + str(sum(num_variables) / len(num_variables)))
     print("Max number of variables: " + str(max(num_variables)))
-
-def get_filename():
-    parser = argparse.ArgumentParser(description="Convert a verilog circuit into a CNF formula andm easure metrics on that formula")
-    parser.add_argument("verilog", help="The Verilog file")
-
-    args = parser.parse_args()
-
-    return args.verilog
 
 if __name__ == "__main__":
     filename = get_filename()

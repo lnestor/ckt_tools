@@ -5,6 +5,15 @@ from node_type import NodeType
 from circuit_graph import CircuitGraph
 
 def parse_ast(ast):
+    """Parses a Verilog abstract syntax tree into a CircuitGraph.
+
+    Args:
+        ast: the pyverilog AST
+
+    Returns:
+        CircuitGraph: the graph representation of the circuit
+
+    """
     ast_parser = ASTParser()
 
     return ast_parser.parse(ast)
