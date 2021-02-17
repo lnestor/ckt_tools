@@ -5,11 +5,11 @@ class CircuitGraph:
     between nodes represent the wires connecting the gates.
 
     """
-    def __init__(self, nodes, outputs, inputs, assign_count):
+    def __init__(self, nodes, outputs, inputs):
         self.nodes = nodes
         self.outputs = outputs
         self.inputs = inputs
-        self.size = len(nodes) - assign_count - len(inputs)
+        self.size = len(nodes) - len(inputs)
 
     def __eq__(self, other):
         if isinstance(self, other.__class__):

@@ -4,19 +4,38 @@ import z3
 
 from arg_parser import get_filename
 from ast_parser import parse_ast
+from node_type import NodeType
 from z3_builder import Z3Builder
 
-def measure_fanin(ckt_graph):
-    num_nodes = 0
-    total = 0
-    for name, node in ckt_graph.nodes.items():
-        if node.type != "assign" and len(node.inputs) > 1:
-            total += len(node.inputs)
-            num_nodes += 1
+def measure_fanin1(ckt_graph, node, depth):
+    depth_1 = len(set(node.inputs))
 
-    return total / num_nodes
+    if depth == 1:
+        return depth_1
+    else:
+        inputs = filter(lambda x: x.type != NodeType.INPUT, [ckt_graph.nodes[i] for i in node.inputs])
+        fanins = [measure_fanin1(ckt_graph, i, depth - 1) for i in inputs]
+
+        return depth_1 + sum(fanins)
+
+def measure_fanin2(ckt_graph, depth):
+    non_inputs = filter(lambda x: x.type != NodeType.INPUT, ckt_graph.nodes.values())
+    fanins = [measure_fanin1(ckt_graph, node, depth) for node in non_inputs]
+
+    return sum(fanins) / len(fanins)
+
+
+def measure_fanin(ckt_graph):
+    total = 0
+
+    for name, node in ckt_graph.nodes.items():
+        fanin = len(set(node.inputs))
+        total += fanin
+
+    return total / ckt_graph.size
 
 def measure_fanout(ckt_graph):
+    # Maybe change this to be calculated when parsing
     fanout = {}
 
     for name, node in ckt_graph.nodes.items():
@@ -35,10 +54,11 @@ def measure_fanout(ckt_graph):
 
 def measure_metrics(ckt_graph):
     print("\nNumber of gates: %i" % (ckt_graph.size))
-    print(ckt_graph.outputs)
     print("Number of inputs: %i" % (len(ckt_graph.inputs)))
     print("Number of outputs: %i" % (len(ckt_graph.outputs)))
 
+    t = measure_fanin2(ckt_graph, 2)
+    print("Average fanin test: %.2f" % (t))
     fanin = measure_fanin(ckt_graph)
     print("Average fanin: %.2f" % (fanin))
 

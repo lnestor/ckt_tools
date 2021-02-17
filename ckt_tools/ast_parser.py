@@ -23,6 +23,7 @@ class ASTParser():
         self.nodes = {}
         self.outputs = []
         self.inputs = []
+        self.assigns = []
 
     def parse(self, ast):
         """Parses a Verilog AST into a Circuit Graph.
@@ -50,7 +51,9 @@ class ASTParser():
         for output in self.outputs:
             self._remove_assigns(output, None)
 
-        return CircuitGraph(self.nodes, self.outputs, self.inputs, 0)
+        self._delete_assigns()
+
+        return CircuitGraph(self.nodes, self.outputs, self.inputs)
 
     def _parse_decl(self, decl):
         """Parses a Verilog declaration.
@@ -167,6 +170,7 @@ class ASTParser():
         """
         left_arg = self._parse_arg(assign.left)
         right_arg = self._parse_arg(assign.right)
+        self.assigns.append(left_arg)
 
         if not left_arg in self.nodes:
             self.nodes[left_arg] = Node(left_arg, [], "wire")
@@ -175,7 +179,7 @@ class ASTParser():
         self.nodes[left_arg].type = "assign"
 
     def _remove_assigns(self, name, prev_name):
-        """Removes all assign nodes from a circuit graph.
+        """Removes all references to assign nodes from a circuit graph.
 
         The assign nodes are not a part of the actual circuit and as such do not need to be in the graph.
         This method recursively removes all assign nodes from the graph. The nodes still exist in the graph
@@ -207,3 +211,13 @@ class ASTParser():
             # This isn't an assign node, check all children
             for i in self.nodes[name].inputs:
                 self._remove_assigns(i, name)
+
+    def _delete_assigns(self):
+        """Deletes all assign nodes from a circuit graph.
+
+        The method _remove_assigns removes all references. This method
+        removes the actual nodes.
+
+        """
+        for name in self.assigns:
+            del self.nodes[name]
