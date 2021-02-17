@@ -10,11 +10,11 @@ def measure_metrics(z3_ckt):
     num_variables = []
 
     for name, formula in z3_ckt.items():
-        print("Adding " + name + " to goal")
+        # print("Adding " + name + " to goal")
         g = z3.Goal()
         g.add(formula)
 
-        print("Converting to tseitin-cnf")
+        # print("Converting to tseitin-cnf")
         tactic = z3.Tactic("tseitin-cnf")
         cnf = tactic(g)[0]
 

@@ -21,3 +21,9 @@ class Node:
             return self.output == other.output and self.inputs == other.inputs and self.type == other.type
         else:
             return False
+
+    def __repr__(self):
+        return "%s = %s(%s)" % (self.output, self.type, ",".join(self.inputs))
+
+    def __str__(self):
+        return "%s = %s(%s)" % (self.output, self.type, ",".join(self.inputs))
