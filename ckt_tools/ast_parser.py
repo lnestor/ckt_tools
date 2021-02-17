@@ -24,11 +24,16 @@ class ASTParser():
         self.outputs = []
         self.inputs = []
 
-        self.node_tracker = {}
-        self.assigns = []
-        # self.assign_count = 0
-
     def parse(self, ast):
+        """Parses a Verilog AST into a Circuit Graph.
+
+        Args:
+            ast: the pyverilog AST
+
+        Returns:
+            CircuitGraph: the graph representation of the circuit
+
+        """
         description = ast.children()[0]
         moduledef = description.children()[0]
 
@@ -42,12 +47,20 @@ class ASTParser():
             else:
                 import pdb; pdb.set_trace()
 
-        # self._replace_assigns()
-        self._remove_assigns()
+        for output in self.outputs:
+            self._remove_assigns(output, None)
 
         return CircuitGraph(self.nodes, self.outputs, self.inputs, 0)
 
     def _parse_decl(self, decl):
+        """Parses a Verilog declaration.
+
+        A declaration can be an input, output, or wire statement.
+
+        Args:
+            decl: the pyverilog declaration object
+
+        """
         for child in decl.children():
             if isinstance(child, vast.Input):
                 self._parse_input(child)
@@ -59,6 +72,12 @@ class ASTParser():
                 import pdb; pdb.set_trace()
 
     def _parse_input(self, input):
+        """Parses a Verilog input.
+
+        Args:
+            input: the pyverilog input object
+
+        """
         base_name = input.name
 
         if input.width is not None:
@@ -71,6 +90,12 @@ class ASTParser():
             self.inputs.append(base_name)
 
     def _parse_output(self, output):
+        """Parses a Verilog output.
+
+        Args:
+            input: the pyverilog output object
+
+        """
         base_name = output.name
 
         if output.width is not None:
@@ -84,17 +109,29 @@ class ASTParser():
 
 
     def _parse_wire(self, wire):
+        """Parses a Verilog wire.
+
+        Args:
+            wire: the pyverilog wire object
+
+        """
         name = wire.name
         self.nodes[name] = Node(name, [], NodeType.WIRE)
 
     def _parse_instance_list(self, ilist):
+        """Parses a Verilog instance list.
+
+        An "instance list" is a single gate declaration.
+
+        Args:
+            ilist: the pyverilog instance list object.
+
+        """
         itype = ilist.module
         instance = ilist.children()[0]
 
         output = self._parse_arg(instance.children()[0])
         inputs = [self._parse_arg(c) for c in instance.children()[1:]]
-
-        self._track(output, inputs)
 
         if not output in self.nodes:
             self.nodes[output] = Node(output, [], "wire")
@@ -103,6 +140,15 @@ class ASTParser():
         self.nodes[output].type = itype
 
     def _parse_arg(self, arg):
+        """Parses a Verilog argument.
+
+        An argument is a variable name. This method assumes the argument is of width one. It
+        can be a single wire or part of a bus, but it does not support something like w1[3:0]
+
+        Args:
+            arg: the pyverilog argument
+
+        """
         if isinstance(arg.children()[0], vast.Identifier):
             return str(arg.children()[0].name)
         elif isinstance(arg.children()[0], vast.Pointer):
@@ -113,82 +159,51 @@ class ASTParser():
             import pdb; pdb.set_trace()
 
     def _parse_assign(self, assign):
+        """Parses a Verilog assign statement.
+
+        Args:
+            assign: the pyverilog assign statement
+
+        """
         left_arg = self._parse_arg(assign.left)
         right_arg = self._parse_arg(assign.right)
-
-        self.assigns.append((left_arg, right_arg))
 
         if not left_arg in self.nodes:
             self.nodes[left_arg] = Node(left_arg, [], "wire")
 
         self.nodes[left_arg].inputs = [right_arg]
         self.nodes[left_arg].type = "assign"
-        # self.assign_count += 1
 
-    def _track(self, output, inputs):
-        """Keeps track of where nodes are being used as inputs to gates.
+    def _remove_assigns(self, name, prev_name):
+        """Removes all assign nodes from a circuit graph.
 
-        This allows us to remove assign nodes at the end of the parsing process.
-        By tracking which nodes are the inputs to which gates, we can iterate
-        through every assign statement in the code and replace the RHS with the
-        LHS. Without tracking every node, we would need to iterate through every
-        node for every assign statement, which would take a lot of time.
+        The assign nodes are not a part of the actual circuit and as such do not need to be in the graph.
+        This method recursively removes all assign nodes from the graph. The nodes still exist in the graph
+        must be deleted after calling this method. However, there will be no references to them.
 
         Args:
-            output: the output to the gate/graph node we are tracking
-            inputs: a list of inputs to the gate we are tracking
+            name: the name of the root node to remove assigns from
+            prev_name: the name of the parent of the root node
 
         """
-        for input in inputs:
-            if input in self.node_tracker:
-                self.node_tracker[input].append(output)
-            else:
-                self.node_tracker[input] = [output]
-
-    def _remove_assigns(self):
-        for name in self.outputs:
-            self._remove_assigns1(name, None)
-
-    def _remove_assigns1(self, name, prev_name):
         if self.nodes[name].type == "assign":
             RHS = self.nodes[name].inputs[0]
             LHS = self.nodes[name].output
 
             if prev_name is None:
-                # Output
+                # Occurs only when name is an output, we rename the output and move on
                 self.outputs = [RHS if o == LHS else o for o in self.outputs]
-                self._remove_assigns1(RHS, prev_name)
+                self._remove_assigns(RHS, prev_name)
             elif prev_name in self.nodes:
+                # We must swap the name of the input. The input name is the LHS, we swap
+                # it to the RHS
                 prev_node = self.nodes[prev_name]
-                # prev_node.inputs = [LHS if i == RHS else i for i in prev_node.inputs]
                 prev_node.inputs = [RHS if i == LHS else i for i in prev_node.inputs]
 
-                self._remove_assigns1(RHS, prev_name)
+                self._remove_assigns(RHS, prev_name)
             else:
                 import pdb; pdb.set_trace()
         else:
+            # This isn't an assign node, check all children
             for i in self.nodes[name].inputs:
-                self._remove_assigns1(i, name)
-
-    def _replace_assigns(self):
-        """Swaps the RHS of all assign statements for the LHS.
-
-        This function will effectively remove all mention of the RHS for
-        any assign statement in the circuit graph, replacing it by the LHS.
-
-        """
-        for LHS, RHS in self.assigns:
-            if RHS in self.node_tracker:
-                for node in self.node_tracker[RHS]:
-                    new_inputs = [LHS if i == RHS else i for i in self.nodes[node].inputs]
-                    self.nodes[node].inputs = new_inputs
-
-            if RHS in self.nodes:
-                self.nodes[LHS] = Node(LHS, [], None)
-                self.nodes[LHS].type = self.nodes[RHS].type
-                self.nodes[LHS].inputs = self.nodes[RHS].inputs
-
-        for LHS, RHS in self.assigns:
-            if RHS in self.nodes:
-                del self.nodes[RHS]
-
+                self._remove_assigns(i, name)
