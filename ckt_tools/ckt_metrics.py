@@ -8,22 +8,21 @@ from node_type import NodeType
 from z3_builder import Z3Builder
 
 def measure_fanin1(ckt_graph, node, depth):
-    depth_1 = len(set(node.inputs))
+    depth_1 = set(node.inputs)
 
     if depth == 1:
         return depth_1
     else:
         inputs = filter(lambda x: x.type != NodeType.INPUT, [ckt_graph.nodes[i] for i in node.inputs])
-        fanins = [measure_fanin1(ckt_graph, i, depth - 1) for i in inputs]
+        fanins = set().union(*[measure_fanin1(ckt_graph, i, depth - 1) for i in inputs])
 
-        return depth_1 + sum(fanins)
+        return depth_1 | fanins
 
 def measure_fanin2(ckt_graph, depth):
     non_inputs = filter(lambda x: x.type != NodeType.INPUT, ckt_graph.nodes.values())
-    fanins = [measure_fanin1(ckt_graph, node, depth) for node in non_inputs]
+    fanins = [len(measure_fanin1(ckt_graph, node, depth)) for node in non_inputs]
 
     return sum(fanins) / len(fanins)
-
 
 def measure_fanin(ckt_graph):
     total = 0
