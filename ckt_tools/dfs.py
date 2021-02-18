@@ -1,3 +1,5 @@
+from node_type import NodeType
+
 def find_depth(ckt_graph):
     """Finds the depth for a given circuit.
 
@@ -10,20 +12,20 @@ def find_depth(ckt_graph):
         int: the depth of the circuit
 
     """
-    # longest_path = [0] * (len(ckt_graph.nodes) + 1)
-    # visited = [False] * (len(ckt_graph.nodes) + 1)
     longest_path = dict.fromkeys(ckt_graph.nodes, 0)
     visited = dict.fromkeys(ckt_graph.nodes, False)
+    nodes_in_subtree = {key: set() for key in ckt_graph.nodes}
 
-    for node_name in ckt_graph.nodes:
-        if not visited[node_name]:
-            dfs(ckt_graph, node_name, visited, longest_path)
+    for output in ckt_graph.outputs:
+        dfs(ckt_graph, output, visited, longest_path, nodes_in_subtree)
 
     max_key = max(longest_path, key=longest_path.get)
+    tree_sizes = {key: len(nodes_in_subtree[key]) for key in ckt_graph.outputs}
 
+    # Still need to return tree sizes
     return (max_key, longest_path[max_key])
 
-def dfs(ckt_graph, node_name, visited, longest_path):
+def dfs(ckt_graph, node_name, visited, longest_path, nodes_in_subtree):
     """Performs a DFS and measures several statistics on its way.
 
     Statistics measured during the search:
@@ -39,10 +41,15 @@ def dfs(ckt_graph, node_name, visited, longest_path):
 
     """
     visited[node_name] = True
+    nodes_in_subtree[node_name].add(node_name)
 
     for input in ckt_graph.nodes[node_name].inputs:
         if not visited[input]:
-            dfs(ckt_graph, input, visited, longest_path)
+            dfs(ckt_graph, input, visited, longest_path, nodes_in_subtree)
 
         longest_path[node_name] = max(longest_path[node_name], 1 + longest_path[input])
+
+        if len(ckt_graph.nodes[input].inputs) != 0:
+
+            nodes_in_subtree[node_name] = nodes_in_subtree[node_name] | nodes_in_subtree[input]
 
