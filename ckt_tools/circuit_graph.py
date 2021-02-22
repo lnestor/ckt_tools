@@ -1,3 +1,5 @@
+from node_type import NodeType
+
 class CircuitGraph:
     """Graph representation of a circuit.
 
@@ -10,6 +12,9 @@ class CircuitGraph:
         self.outputs = outputs
         self.inputs = inputs
         self.size = len(nodes) - len(inputs)
+
+    def non_inputs(self):
+        return dict(filter(lambda x: x[1].type != NodeType.INPUT, self.nodes.items()))
 
     def __eq__(self, other):
         if isinstance(self, other.__class__):

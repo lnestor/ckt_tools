@@ -9777,7 +9777,7 @@ module WallaceTree16X16(pp0, pp1, pp2, pp3, pp4, pp5, pp6, pp7, pp8, pp9, pp10, 
     \thi2ha2.b 
   );
 
-  assign opa[31] = 1;
+  /* assign opa[31] = 1; */
   assign opa[30] = Six_S[23];
   assign opa[29] = Six_S[22];
   assign opa[28] = Six_S[21];
@@ -9838,13 +9838,13 @@ module WallaceTree16X16(pp0, pp1, pp2, pp3, pp4, pp5, pp6, pp7, pp8, pp9, pp10, 
   assign opb[8] = Six_C[1];
   assign opb[7] = Six_C[0];
   assign opb[6] = Six_C[24];
-  assign opb[5] = 1;
-  assign opb[4] = 1;
-  assign opb[3] = 1;
-  assign opb[2] = 1;
-  assign opb[1] = 1;
-  assign opb[0] = 1;
-  assign opb[31] = 1;
+  /* assign opb[5] = 1; */
+  /* assign opb[4] = 1; */
+  /* assign opb[3] = 1; */
+  /* assign opb[2] = 1; */
+  /* assign opb[1] = 1; */
+  /* assign opb[0] = 1; */
+  /* assign opb[31] = 1; */
 
   assign \thi2ha2.a  = Sec2_C[4];
   assign \thi2ha2.b  = Sec3_S[0];

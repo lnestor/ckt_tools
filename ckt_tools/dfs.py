@@ -22,8 +22,10 @@ def find_depth(ckt_graph):
     max_key = max(longest_path, key=longest_path.get)
     tree_sizes = {key: len(nodes_in_subtree[key]) for key in ckt_graph.outputs}
 
+    output_tree_sizes = {o: len(nodes_in_subtree[o]) for o in ckt_graph.outputs}
+
     # Still need to return tree sizes
-    return (max_key, longest_path[max_key])
+    return (max_key, longest_path[max_key], output_tree_sizes)
 
 def dfs(ckt_graph, node_name, visited, longest_path, nodes_in_subtree):
     """Performs a DFS and measures several statistics on its way.

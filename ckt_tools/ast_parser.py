@@ -48,10 +48,11 @@ class ASTParser():
             else:
                 import pdb; pdb.set_trace()
 
-        for output in self.outputs:
-            self._remove_assigns(output, None)
+        if len(self.assigns) > 0:
+            for output in self.outputs:
+                self._remove_assigns(output, None)
 
-        self._delete_assigns()
+            self._delete_assigns()
 
         return CircuitGraph(self.nodes, self.outputs, self.inputs)
 
