@@ -390,32 +390,32 @@ And AND1(cout, a, b);
 
 endmodule
 
-module And(a, b, c);
+/* module And(a, b, c); */
 
-input b, c;
-output a;
+/* input b, c; */
+/* output a; */
 
-assign a = b & c;
+/* assign a = b & c; */
 
-endmodule
+/* endmodule */
 
-module Xor(a, b, c);
+/* module Xor(a, b, c); */
 
-input b, c;
-output a;
+/* input b, c; */
+/* output a; */
 
-assign a = b ^ c;
+/* assign a = b ^ c; */
 
-endmodule
+/* endmodule */
 
-module Or(a, b, c);
+/* module Or(a, b, c); */
 
-input b, c;
-output a;
+/* input b, c; */
+/* output a; */
 
-assign a = b | c;
+/* assign a = b | c; */
 
-endmodule
+/* endmodule */
 
 
 
