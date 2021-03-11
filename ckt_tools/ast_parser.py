@@ -50,7 +50,7 @@ class ASTParser():
 
         if len(self.assigns) > 0:
             for output in self.outputs:
-                self._remove_assigns(output, None)
+                self._remove_assigns(output, None, set())
 
             self._delete_assigns()
 
@@ -134,14 +134,30 @@ class ASTParser():
         itype = ilist.module
         instance = ilist.children()[0]
 
-        output = self._parse_arg(instance.children()[0])
-        inputs = [self._parse_arg(c) for c in instance.children()[1:]]
+        output, inputs = self._parse_portargs(instance)
 
         if not output in self.nodes:
             self.nodes[output] = Node(output, [], "wire")
 
         self.nodes[output].inputs = inputs
-        self.nodes[output].type = itype
+        self.nodes[output].type = itype.lower()
+
+    def _parse_portargs(self, instance):
+        inputs = []
+        output = None
+
+        for i, portarg in enumerate(instance.children()):
+            port = portarg.portname
+            name = self._parse_arg(portarg)
+
+            if port is None and i == 0:
+                output = name
+            elif port == "Y":
+                output = name
+            else:
+                inputs.append(name)
+
+        return output, inputs
 
     def _parse_arg(self, arg):
         """Parses a Verilog argument.
@@ -158,7 +174,7 @@ class ASTParser():
         elif isinstance(arg.children()[0], vast.Pointer):
             return str(arg.children()[0].var) + "_" + str(arg.children()[0].ptr)
         elif isinstance(arg.children()[0], vast.IntConst):
-            return int(str(arg.children()[0]))
+            return int(str(arg.children()[0])[0])
         else:
             import pdb; pdb.set_trace()
 
@@ -179,7 +195,7 @@ class ASTParser():
         self.nodes[left_arg].inputs = [right_arg]
         self.nodes[left_arg].type = "assign"
 
-    def _remove_assigns(self, name, prev_name):
+    def _remove_assigns(self, name, prev_name, visited):
         """Removes all references to assign nodes from a circuit graph.
 
         The assign nodes are not a part of the actual circuit and as such do not need to be in the graph.
@@ -191,6 +207,7 @@ class ASTParser():
             prev_name: the name of the parent of the root node
 
         """
+        visited.add(name)
         if self.nodes[name].type == "assign":
             RHS = self.nodes[name].inputs[0]
             LHS = self.nodes[name].output
@@ -198,20 +215,21 @@ class ASTParser():
             if prev_name is None:
                 # Occurs only when name is an output, we rename the output and move on
                 self.outputs = [RHS if o == LHS else o for o in self.outputs]
-                self._remove_assigns(RHS, prev_name)
+                self._remove_assigns(RHS, prev_name, visited)
             elif prev_name in self.nodes:
                 # We must swap the name of the input. The input name is the LHS, we swap
                 # it to the RHS
                 prev_node = self.nodes[prev_name]
                 prev_node.inputs = [RHS if i == LHS else i for i in prev_node.inputs]
 
-                self._remove_assigns(RHS, prev_name)
+                self._remove_assigns(RHS, prev_name, visited)
             else:
                 import pdb; pdb.set_trace()
         else:
             # This isn't an assign node, check all children
             for i in self.nodes[name].inputs:
-                self._remove_assigns(i, name)
+                if i not in visited:
+                    self._remove_assigns(i, name, visited)
 
     def _delete_assigns(self):
         """Deletes all assign nodes from a circuit graph.

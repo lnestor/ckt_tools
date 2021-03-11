@@ -1,0 +1,18 @@
+library(nor_only) {
+  cell(BUF) {
+    pin(A) { direction: input; }
+    pin(Y) { direction: output;
+              function: "A"; }
+  }
+  cell(NOT) {
+    pin(A) { direction: input; }
+    pin(Y) { direction: output;
+              function: "A'"; }
+  }
+  cell(NOR) {
+    pin(A) { direction: input; }
+    pin(B) { direction: input; }
+    pin(Y) { direction: output;
+              function: "(A+B)'"; }
+  }
+}
