@@ -11,19 +11,20 @@ class Node:
         type: the type of gate
 
     """
-    def __init__(self, output, inputs, type):
-        self.output = output
+    def __init__(self, output_port, output_wire, inputs, type):
+        self.output_port = output_port
+        self.output_wire = output_wire
         self.inputs = inputs
         self.type = type
 
     def __eq__(self, other):
         if isinstance(self, other.__class__):
-            return self.output == other.output and self.inputs == other.inputs and self.type == other.type
+            return self.output_port == other.output_port and self.inputs == other.inputs and self.type == other.type
         else:
             return False
 
     def __repr__(self):
-        return "%s = %s(%s)" % (self.output, self.type, ",".join(self.inputs))
+        return "%s = %s(%s)" % (self.output_port, self.type, ",".join(self.inputs))
 
     def __str__(self):
-        return "%s = %s(%s)" % (self.output, self.type, ",".join(self.inputs))
+        return "%s = %s(%s)" % (self.output_port, self.type, ",".join(self.inputs))

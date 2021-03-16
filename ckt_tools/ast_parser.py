@@ -87,10 +87,10 @@ class ASTParser():
         if input.width is not None:
             for i in range(int(input.width.lsb.value), int(input.width.msb.value) + 1):
                 name = base_name + "_" + str(i)
-                self.nodes[name] = Node(name, [], NodeType.INPUT)
+                self.nodes[name] = Node(name, name, [], NodeType.INPUT)
                 self.inputs.append(name)
         else:
-            self.nodes[base_name] = Node(base_name, [], NodeType.INPUT)
+            self.nodes[base_name] = Node(base_name, base_name, [], NodeType.INPUT)
             self.inputs.append(base_name)
 
     def _parse_output(self, output):
@@ -105,10 +105,12 @@ class ASTParser():
         if output.width is not None:
             for i in range(int(output.width.lsb.value), int(output.width.msb.value) + 1):
                 name = base_name + "_" + str(i)
-                self.nodes[name] = Node(name, [], NodeType.OUTPUT)
+                output_port = "%s.Y" % name
+                self.nodes[name] = Node(output_port, name, [], NodeType.OUTPUT)
                 self.outputs.append(name)
         else:
-            self.nodes[base_name] = Node(base_name, [], NodeType.OUTPUT)
+            output_port = "%s.Y" % base_name
+            self.nodes[base_name] = Node(output_port, base_name, [], NodeType.OUTPUT)
             self.outputs.append(base_name)
 
 
@@ -119,8 +121,9 @@ class ASTParser():
             wire: the pyverilog wire object
 
         """
-        name = wire.name
-        self.nodes[name] = Node(name, [], NodeType.WIRE)
+        wire_name = wire.name
+        output_port = "%s.Y" % (wire_name)
+        self.nodes[wire_name] = Node(output_port, wire_name, [], NodeType.WIRE)
 
     def _parse_instance_list(self, ilist):
         """Parses a Verilog instance list.
@@ -133,14 +136,24 @@ class ASTParser():
         """
         itype = ilist.module
         instance = ilist.children()[0]
+        name = instance.name
 
         output, inputs = self._parse_portargs(instance)
 
         if not output in self.nodes:
-            self.nodes[output] = Node(output, [], "wire")
+            output_port = "%s.Y" % (name)
+            self.nodes[output] = Node(output_port, output, [], "wire")
 
+        output_port = "%s.Y" % (name)
+        self.nodes[output].output_port = output_port
         self.nodes[output].inputs = inputs
         self.nodes[output].type = itype.lower()
+
+        self.nodes[output_port] = self.nodes[output]
+
+        for i in range(len(inputs)):
+            input_letter = chr(ord("A") + i)
+            self.nodes["%s.%s" % (name, input_letter)] = self.nodes[inputs[i]]
 
     def _parse_portargs(self, instance):
         inputs = []
@@ -190,7 +203,7 @@ class ASTParser():
         self.assigns.append(left_arg)
 
         if not left_arg in self.nodes:
-            self.nodes[left_arg] = Node(left_arg, [], "wire")
+            self.nodes[left_arg] = Node(left_arg, left_arg, [], "wire")
 
         self.nodes[left_arg].inputs = [right_arg]
         self.nodes[left_arg].type = "assign"
