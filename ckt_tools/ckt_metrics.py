@@ -24,6 +24,7 @@ def measure_fanin_single_gate(ckt_graph, node, depth):
 
 def measure_fanin(ckt_graph, depth):
     non_inputs = filter(lambda x: x.type != NodeType.INPUT, ckt_graph.nodes.values())
+
     fanins = [len(measure_fanin_single_gate(ckt_graph, node, depth)) for node in non_inputs]
 
     return sum(fanins) / len(fanins)
@@ -94,61 +95,66 @@ def measure_wire_complexity(ckt_graph):
     return wire_count - len(ckt_graph.inputs)
 
 def measure_metrics(ckt_graph):
-    print("\nNumber of gates: %i" % (ckt_graph.size))
-    print("Number of inputs: %i" % (len(ckt_graph.inputs)))
-    print("Number of outputs: %i" % (len(ckt_graph.outputs)))
+    # print("\nNumber of gates: %i" % (ckt_graph.size))
+    # print("Number of inputs: %i" % (len(ckt_graph.inputs)))
+    # print("Number of outputs: %i" % (len(ckt_graph.outputs)))
 
     fanin_1 = measure_fanin(ckt_graph, 1)
     fanin_2 = measure_fanin(ckt_graph, 2)
     fanin_3 = measure_fanin(ckt_graph, 3)
-    print("\nAverage fanin (1): %.2f" % (fanin_1))
-    print("\nAverage fanin (2): %.2f" % (fanin_2))
-    print("\nAverage fanin (3): %.2f" % (fanin_3))
+    # print("\nAverage fanin (1): %.2f" % (fanin_1))
+    # print("\nAverage fanin (2): %.2f" % (fanin_2))
+    # print("\nAverage fanin (3): %.2f" % (fanin_3))
 
     fanout_nodes_1 = measure_fanout(ckt_graph, 1, {key: set() for key in ckt_graph.non_inputs()})
     fanout_count_1 = [len(v) for v in fanout_nodes_1.values()]
     fanout_1 = sum(fanout_count_1) / len(fanout_count_1)
-    print("Average fanout (1): %.2f" % (fanout_1))
+    # print("Average fanout (1): %.2f" % (fanout_1))
 
     fanout_nodes_2 = measure_fanout(ckt_graph, 2, {key: set() for key in ckt_graph.non_inputs()})
     fanout_count_2 = [len(v) for v in fanout_nodes_2.values()]
     fanout_2 = sum(fanout_count_2) / len(fanout_count_2)
-    print("Average fanout (2): %.2f" % (fanout_2))
+    # print("Average fanout (2): %.2f" % (fanout_2))
 
     fanout_nodes_3 = measure_fanout(ckt_graph, 3, {key: set() for key in ckt_graph.non_inputs()})
     fanout_count_3 = [len(v) for v in fanout_nodes_3.values()]
     fanout_3 = sum(fanout_count_3) / len(fanout_count_3)
-    print("Average fanout (3): %.2f" % (fanout_3))
+    # print("Average fanout (3): %.2f" % (fanout_3))
 
     longest_output, depth, output_tree_sizes = find_depth(ckt_graph)
-    print("\nDepth: %i (%s)" % (depth, longest_output))
+    # print("\nDepth: %i (%s)" % (depth, longest_output))
 
     input_prop = measure_input_propagation(fanout_nodes_1, ckt_graph)
-    print("\nAverage number of nodes affected by input: %.2f" % (sum(input_prop) / len(input_prop)))
-    print("Max number of nodes affected by input: %i" % (max(input_prop)))
+    avg_input_prop = sum(input_prop) / len(input_prop)
+    # print("\nAverage number of nodes affected by input: %.2f" % (sum(input_prop) / len(input_prop)))
+    # print("Max number of nodes affected by input: %i" % (max(input_prop)))
 
-    print("Average size of output sub-tree: %.2f" % (sum(output_tree_sizes.values()) / len(output_tree_sizes)))
+    # print("Average size of output sub-tree: %.2f" % (sum(output_tree_sizes.values()) / len(output_tree_sizes)))
     max_output = max(output_tree_sizes, key=output_tree_sizes.get)
-    print("Max size of output sub-tree: %i (%s)" % (max(output_tree_sizes.values()), max_output))
+    avg_output_size = sum(output_tree_sizes.values()) / len(output_tree_sizes)
+    # print("Max size of output sub-tree: %i (%s)" % (max(output_tree_sizes.values()), max_output))
 
 
-    print("\nDistribution of types of gates:")
+    # print("\nDistribution of types of gates:")
     types = measure_gate_types(ckt_graph)
-    for t in types:
-        print(" - %s: %i" % (t, types[t]))
+    # for t in types:
+    #     print(" - %s: %i" % (t, types[t]))
 
     wire_complexity = measure_wire_complexity(ckt_graph)
-    print("\nWire complexity: %i" % (wire_complexity))
+    # print("\nWire complexity: %i" % (wire_complexity))
+
+    print("%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%.2f,%i,%.2f,%i,%i" % (ckt_graph.size, fanin_1, fanin_2, fanin_3, fanout_1, fanout_2, fanout_3, depth, avg_input_prop, max(input_prop), avg_output_size, max(output_tree_sizes.values()), wire_complexity))
 
 if __name__ == "__main__":
     filename = get_filename()
 
-    print("Parsing Verilog file")
+    # print("Parsing Verilog file")
     ast, directives = parse([filename])
-    print("Parsing complete")
+    print(ast.children()[0].children()[0].name[78:])
+    # print("Parsing complete")
 
-    print("Parsing AST")
+    # print("Parsing AST")
     ckt_graph = parse_ast(ast)
-    print("Parsing complete")
+    # print("Parsing complete")
 
     measure_metrics(ckt_graph)

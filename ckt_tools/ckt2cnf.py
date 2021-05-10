@@ -39,28 +39,38 @@ def measure_metrics(z3_ckt):
 
         num_variables.append(len(variables))
 
-    print("\nNumber of clauses: " + repr(num_clauses))
-    print("Average number of clauses: " + str(sum(num_clauses) / len(num_clauses)))
-    print("Max number of clauses: " + str(max(num_clauses)))
-    print("Average number of variables: " + str(sum(num_variables) / len(num_variables)))
-    print("Max number of variables: " + str(max(num_variables)))
+    avg_clauses = sum(num_clauses) / len(num_clauses)
+    max_clauses = max(num_clauses)
+    avg_variables = sum(num_variables) / len(num_variables)
+    max_variables = max(num_variables)
+
+    print("%.2f,%i,%.2f,%i" % (avg_clauses, max_clauses, avg_variables, max_variables))
+
+    # print("\nNumber of clauses: " + repr(num_clauses))
+    # print("Average number of clauses: " + str(sum(num_clauses) / len(num_clauses)))
+    # print("Max number of clauses: " + str(max(num_clauses)))
+
+    # print("Number of variables: " + repr(num_variables))
+    # print("Average number of variables: " + str(sum(num_variables) / len(num_variables)))
+    # print("Max number of variables: " + str(max(num_variables)))
 
 if __name__ == "__main__":
     filename = get_filename()
 
-    print("Parsing Verilog file")
+    # print("Parsing Verilog file")
     ast, directives = parse([filename])
-    print("Parsing complete")
+    print(ast.children()[0].children()[0].name[78:])
+    # print("Parsing complete")
 
-    print("Parsing AST")
+    # print("Parsing AST")
     ckt_graph = parse_ast(ast)
-    print("Parsing complete")
+    # print("Parsing complete")
 
-    print("Building circuit")
+    # print("Building circuit")
     builder = Z3Builder()
     z3_ckt, inputs = builder.build(ckt_graph)
-    print("Building circuit complete")
+    # print("Building circuit complete")
 
-    print("Measuring metrics")
+    # print("Measuring metrics")
     measure_metrics(z3_ckt)
 
