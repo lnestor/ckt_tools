@@ -33,6 +33,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a scatter plot of CNF formula vs circuit metric")
     parser.add_argument("structural_file", help="A CSV file with structure metrics")
     parser.add_argument("cnf_file", help="A CSV file with CNF metrics")
+    parser.add_argument("--show", action="store_true", help="Display the figure instead of saving it")
     args = parser.parse_args()
 
     struct, cnf = read_csv(args)
@@ -72,10 +73,12 @@ if __name__ == "__main__":
     ax.set_ylabel(cnf_name)
     ax.set_title("%s vs %s" % (cnf_name, struct_name))
 
-    date_name = datetime.now().strftime("%m_%d_%Y_%H%M%S")
-    fig_name = input("Enter save name of figure (or leave blank for generic name): ")
-    if len(fig_name) > 0:
-        fig_name = fig_name + "_"
+    if args.show:
+        plt.show()
+    else:
+        date_name = datetime.now().strftime("%m_%d_%Y_%H%M%S")
+        fig_name = input("Enter save name of figure (or leave blank for generic name): ")
+        if len(fig_name) > 0:
+            fig_name = fig_name + "_"
 
-    fig.savefig("%s%s" % (fig_name, date_name), bbox_inches="tight")
-    # plt.show()
+        fig.savefig("figures/%s%s" % (fig_name, date_name), bbox_inches="tight")
