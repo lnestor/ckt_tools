@@ -1,20 +1,21 @@
+import argparse
 from pyverilog.vparser.parser import parse
 import z3
 
-from arg_parser import get_filename
 from ast_parser import parse_ast
 from z3_builder import Z3Builder
+from ckt2cnf.printer import Printer
 
-def measure_metrics(z3_ckt):
+def measure_metrics(z3_ckt, printer):
     num_clauses = []
     num_variables = []
 
     for name, formula in z3_ckt.items():
-        # print("Adding " + name + " to goal")
+        printer.print_debug("Adding " + name + " to goal")
         g = z3.Goal()
         g.add(formula)
 
-        # print("Converting to tseitin-cnf")
+        printer.print_debug("Converting to tseitin-cnf")
         tactic = z3.Tactic("tseitin-cnf")
         cnf = tactic(g)[0]
 
@@ -44,33 +45,35 @@ def measure_metrics(z3_ckt):
     avg_variables = sum(num_variables) / len(num_variables)
     max_variables = max(num_variables)
 
-    print("%.2f,%i,%.2f,%i" % (avg_clauses, max_clauses, avg_variables, max_variables))
+    metrics = (avg_clauses, max_clauses, avg_variables, max_variables)
+    printer.print_metrics(metrics)
 
-    # print("\nNumber of clauses: " + repr(num_clauses))
-    # print("Average number of clauses: " + str(sum(num_clauses) / len(num_clauses)))
-    # print("Max number of clauses: " + str(max(num_clauses)))
+if __name__ == "__main__" and __package__ is None:
+    __package__ = "ckt_tools.ckt2cnf"
 
-    # print("Number of variables: " + repr(num_variables))
-    # print("Average number of variables: " + str(sum(num_variables) / len(num_variables)))
-    # print("Max number of variables: " + str(max(num_variables)))
+    parser = argparse.ArgumentParser(description="Convert a verilog circuit into a CNF formula and measure metrics on that formula")
+    parser.add_argument("verilog_file", help="The circuit's verilog file")
+    parser.add_argument("--csv", action="store_true", help="Output the metrics in a CSV format")
+    parser.add_argument("--csv_header", action="store_true", help="Output the metric names as a header of the CSV file")
+    parser.add_argument("--debug", action="store_true", help="Output debug info")
 
-if __name__ == "__main__":
-    filename = get_filename()
+    args = parser.parse_args()
 
-    # print("Parsing Verilog file")
-    ast, directives = parse([filename])
-    print(ast.children()[0].children()[0].name[78:])
-    # print("Parsing complete")
+    printer = Printer(args.csv, args.csv_header, args.debug)
 
-    # print("Parsing AST")
+    printer.print_detailed("Parsing Verilog file...")
+    ast, directives = parse([args.verilog_file], debug=False)
+    printer.print_detailed("Parsing complete\n")
+
+    printer.print_detailed("Parsing AST...")
     ckt_graph = parse_ast(ast)
-    # print("Parsing complete")
+    printer.print_detailed("Parsing complete\n")
 
-    # print("Building circuit")
+    printer.print_detailed("Building circuit...")
     builder = Z3Builder()
     z3_ckt, inputs = builder.build(ckt_graph)
-    # print("Building circuit complete")
+    printer.print_detailed("Building circuit complete\n")
 
-    # print("Measuring metrics")
-    measure_metrics(z3_ckt)
+    printer.print_detailed("Measuring metrics...\n")
+    measure_metrics(z3_ckt, printer)
 
