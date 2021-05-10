@@ -80,7 +80,13 @@ class Z3Builder():
         if node.type == "and":
             self.z3_repr[node.output] = z3.And(*fanin)
         elif node.type == "xor":
-            self.z3_repr[node.output] = z3.Xor(*fanin)
+            total_xor = z3.Xor(fanin[0], fanin[1])
+
+            for i in range(len(fanin) - 2):
+                total_xor = z3.Xor(total_xor, fanin[i + 2])
+
+            # self.z3_repr[node.output] = z3.Xor(*fanin)
+            self.z3_repr[node.output] = total_xor
         elif node.type == "or":
             self.z3_repr[node.output] = z3.Or(*fanin)
         elif node.type == "not":
@@ -88,7 +94,12 @@ class Z3Builder():
         elif node.type == "nand":
             self.z3_repr[node.output] = z3.Not(z3.And(*fanin))
         elif node.type == "xnor":
-            self.z3_repr[node.output] = z3.Not(z3.Xor(*fanin))
+            total_xor = z3.Xor(fanin[0], fanin[1])
+
+            for i in range(len(fanin) - 2):
+                total_xor = z3.Xor(total_xor, fanin[i + 2])
+
+            self.z3_repr[node.output] = z3.Not(total_xor)
         elif node.type == "nor":
             self.z3_repr[node.output] = z3.Not(z3.Or(*fanin))
         elif node.type == "buf":
