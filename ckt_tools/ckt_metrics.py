@@ -1,13 +1,30 @@
+import argparse
 import copy
 from pyverilog.vparser.parser import parse
 from statistics import stdev as std
 import z3
 
-from arg_parser import get_filename
 from ast_parser import parse_ast
 from dfs import find_depth
 from node_type import NodeType
+from logger import Logger
 from z3_builder import Z3Builder
+
+HEADERS = [
+    "Size",
+    "Fanin-1",
+    "Fanin-2",
+    "Fanin-3",
+    "Fanout-1",
+    "Fanout-2",
+    "Fanout-3",
+    "Depth",
+    "Input Size (Avg)",
+    "Input Size (Max)",
+    "Output Size (Avg)",
+    "Output Size (Max)",
+    "Wire Complexity"
+]
 
 def measure_fanin_single_gate(ckt_graph, node, depth):
     if depth == 1:
@@ -94,67 +111,77 @@ def measure_wire_complexity(ckt_graph):
     # not be considered
     return wire_count - len(ckt_graph.inputs)
 
-def measure_metrics(ckt_graph):
-    # print("\nNumber of gates: %i" % (ckt_graph.size))
-    # print("Number of inputs: %i" % (len(ckt_graph.inputs)))
-    # print("Number of outputs: %i" % (len(ckt_graph.outputs)))
+def measure_metrics(ckt_graph, logger):
+    logger.log_detailed("\nNumber of gates: %i" % (ckt_graph.size))
+    logger.log_detailed("Number of inputs: %i" % (len(ckt_graph.inputs)))
+    logger.log_detailed("Number of outputs: %i" % (len(ckt_graph.outputs)))
 
     fanin_1 = measure_fanin(ckt_graph, 1)
     fanin_2 = measure_fanin(ckt_graph, 2)
     fanin_3 = measure_fanin(ckt_graph, 3)
-    # print("\nAverage fanin (1): %.2f" % (fanin_1))
-    # print("\nAverage fanin (2): %.2f" % (fanin_2))
-    # print("\nAverage fanin (3): %.2f" % (fanin_3))
+    logger.log_detailed("\nAverage fanin (1): %.2f" % (fanin_1))
+    logger.log_detailed("\nAverage fanin (2): %.2f" % (fanin_2))
+    logger.log_detailed("\nAverage fanin (3): %.2f" % (fanin_3))
 
     fanout_nodes_1 = measure_fanout(ckt_graph, 1, {key: set() for key in ckt_graph.non_inputs()})
     fanout_count_1 = [len(v) for v in fanout_nodes_1.values()]
     fanout_1 = sum(fanout_count_1) / len(fanout_count_1)
-    # print("Average fanout (1): %.2f" % (fanout_1))
+    logger.log_detailed("Average fanout (1): %.2f" % (fanout_1))
 
     fanout_nodes_2 = measure_fanout(ckt_graph, 2, {key: set() for key in ckt_graph.non_inputs()})
     fanout_count_2 = [len(v) for v in fanout_nodes_2.values()]
     fanout_2 = sum(fanout_count_2) / len(fanout_count_2)
-    # print("Average fanout (2): %.2f" % (fanout_2))
+    logger.log_detailed("Average fanout (2): %.2f" % (fanout_2))
 
     fanout_nodes_3 = measure_fanout(ckt_graph, 3, {key: set() for key in ckt_graph.non_inputs()})
     fanout_count_3 = [len(v) for v in fanout_nodes_3.values()]
     fanout_3 = sum(fanout_count_3) / len(fanout_count_3)
-    # print("Average fanout (3): %.2f" % (fanout_3))
+    logger.log_detailed("Average fanout (3): %.2f" % (fanout_3))
 
     longest_output, depth, output_tree_sizes = find_depth(ckt_graph)
-    # print("\nDepth: %i (%s)" % (depth, longest_output))
+    logger.log_detailed("\nDepth: %i (%s)" % (depth, longest_output))
 
     input_prop = measure_input_propagation(fanout_nodes_1, ckt_graph)
     avg_input_prop = sum(input_prop) / len(input_prop)
-    # print("\nAverage number of nodes affected by input: %.2f" % (sum(input_prop) / len(input_prop)))
-    # print("Max number of nodes affected by input: %i" % (max(input_prop)))
+    logger.log_detailed("\nAverage number of nodes affected by input: %.2f" % (sum(input_prop) / len(input_prop)))
+    logger.log_detailed("Max number of nodes affected by input: %i" % (max(input_prop)))
 
-    # print("Average size of output sub-tree: %.2f" % (sum(output_tree_sizes.values()) / len(output_tree_sizes)))
+    logger.log_detailed("Average size of output sub-tree: %.2f" % (sum(output_tree_sizes.values()) / len(output_tree_sizes)))
     max_output = max(output_tree_sizes, key=output_tree_sizes.get)
     avg_output_size = sum(output_tree_sizes.values()) / len(output_tree_sizes)
-    # print("Max size of output sub-tree: %i (%s)" % (max(output_tree_sizes.values()), max_output))
+    logger.log_detailed("Max size of output sub-tree: %i (%s)" % (max(output_tree_sizes.values()), max_output))
 
 
-    # print("\nDistribution of types of gates:")
+    logger.log_detailed("\nDistribution of types of gates:")
     types = measure_gate_types(ckt_graph)
-    # for t in types:
-    #     print(" - %s: %i" % (t, types[t]))
+    for t in types:
+        logger.log_detailed(" - %s: %i" % (t, types[t]))
 
     wire_complexity = measure_wire_complexity(ckt_graph)
-    # print("\nWire complexity: %i" % (wire_complexity))
+    logger.log_detailed("\nWire complexity: %i" % (wire_complexity))
 
-    print("%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%.2f,%i,%.2f,%i,%i" % (ckt_graph.size, fanin_1, fanin_2, fanin_3, fanout_1, fanout_2, fanout_3, depth, avg_input_prop, max(input_prop), avg_output_size, max(output_tree_sizes.values()), wire_complexity))
+    logger.log_terse("%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%.2f,%i,%.2f,%i,%i" % (ckt_graph.size, fanin_1, fanin_2, fanin_3, fanout_1, fanout_2, fanout_3, depth, avg_input_prop, max(input_prop), avg_output_size, max(output_tree_sizes.values()), wire_complexity))
 
 if __name__ == "__main__":
-    filename = get_filename()
+    parser = argparse.ArgumentParser(description="Measure structural metrics on a circuit.")
+    parser.add_argument("verilog_file", help="The circuit's verilog file")
+    parser.add_argument("--csv", action="store_true", help="Output the metrics in a CSV format")
+    parser.add_argument("--csv_header", action="store_true", help="Output the metric names as a header of the CSV file")
+    parser.add_argument("--debug", action="store_true", help="Output debug info")
 
-    # print("Parsing Verilog file")
-    ast, directives = parse([filename])
-    print(ast.children()[0].children()[0].name[78:])
-    # print("Parsing complete")
+    args = parser.parse_args()
 
-    # print("Parsing AST")
+    logger = Logger(not args.csv, args.debug)
+
+    logger.log_detailed("Parsing Verilog file...")
+    ast, directives = parse([args.verilog_file], debug=args.debug)
+    logger.log_detailed("Parsing complete\n")
+
+    logger.log_detailed("Parsing AST...")
     ckt_graph = parse_ast(ast)
-    # print("Parsing complete")
+    logger.log_detailed("Parsing complete\n")
 
-    measure_metrics(ckt_graph)
+    if args.csv_header:
+        logger.log_terse(",".join(HEADERS))
+
+    measure_metrics(ckt_graph, logger)

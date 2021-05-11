@@ -3,19 +3,26 @@ from pyverilog.vparser.parser import parse
 import z3
 
 from ast_parser import parse_ast
+from logger import Logger
 from z3_builder import Z3Builder
-from ckt2cnf.printer import Printer
 
-def measure_metrics(z3_ckt, printer):
+HEADERS = [
+    "Clauses/Output (Avg)",
+    "Clauses/Output (Max)",
+    "Variables/Output (Avg)",
+    "Variables/Output (Max)"
+]
+
+def measure_metrics(z3_ckt, logger):
     num_clauses = []
     num_variables = []
 
     for name, formula in z3_ckt.items():
-        printer.print_debug("Adding " + name + " to goal")
+        logger.log_debug("Adding " + name + " to goal")
         g = z3.Goal()
         g.add(formula)
 
-        printer.print_debug("Converting to tseitin-cnf")
+        logger.log_debug("Converting to tseitin-cnf")
         tactic = z3.Tactic("tseitin-cnf")
         cnf = tactic(g)[0]
 
@@ -33,7 +40,7 @@ def measure_metrics(z3_ckt, printer):
                     input_name = str(child.children()[0])
                     variables.add(input_name)
                 else:
-                    print("More than one child present (%i)" % (len(child.children)))
+                    log("More than one child present (%i)" % (len(child.children)))
 
         if len(cnf) != 0:
             num_clauses.append(len(cnf))
@@ -46,11 +53,15 @@ def measure_metrics(z3_ckt, printer):
     max_variables = max(num_variables)
 
     metrics = (avg_clauses, max_clauses, avg_variables, max_variables)
-    printer.print_metrics(metrics)
+    logger.log_detailed("Average number of clauses: %.2f" % (metrics[0]))
+    logger.log_detailed("Max number of clauses: %i" % (metrics[1]))
 
-if __name__ == "__main__" and __package__ is None:
-    __package__ = "ckt_tools.ckt2cnf"
+    logger.log_detailed("Average number of variables: %.2f" % (metrics[2]))
+    logger.log_detailed("Max number of variables: %i" % (metrics[3]))
 
+    logger.log_terse("%.2f,%i,%.2f,%i" % metrics)
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert a verilog circuit into a CNF formula and measure metrics on that formula")
     parser.add_argument("verilog_file", help="The circuit's verilog file")
     parser.add_argument("--csv", action="store_true", help="Output the metrics in a CSV format")
@@ -59,21 +70,25 @@ if __name__ == "__main__" and __package__ is None:
 
     args = parser.parse_args()
 
-    printer = Printer(args.csv, args.csv_header, args.debug)
+    logger = Logger(not args.csv, args.debug)
 
-    printer.print_detailed("Parsing Verilog file...")
+    logger.log_detailed("Parsing Verilog file...")
     ast, directives = parse([args.verilog_file], debug=False)
-    printer.print_detailed("Parsing complete\n")
+    logger.log_detailed("Parsing complete\n")
 
-    printer.print_detailed("Parsing AST...")
+    logger.log_detailed("Parsing AST...")
     ckt_graph = parse_ast(ast)
-    printer.print_detailed("Parsing complete\n")
+    logger.log_detailed("Parsing complete\n")
 
-    printer.print_detailed("Building circuit...")
+    logger.log_detailed("Building circuit...")
     builder = Z3Builder()
     z3_ckt, inputs = builder.build(ckt_graph)
-    printer.print_detailed("Building circuit complete\n")
+    logger.log_detailed("Building circuit complete\n")
 
-    printer.print_detailed("Measuring metrics...\n")
-    measure_metrics(z3_ckt, printer)
+    logger.log_detailed("Measuring metrics...\n")
+
+    if args.csv_header:
+        logger.log_terse(",".join(HEADERS))
+
+    measure_metrics(z3_ckt, logger)
 
