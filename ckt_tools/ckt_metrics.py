@@ -12,6 +12,8 @@ from z3_builder import Z3Builder
 
 HEADERS = [
     "Size",
+    "Inputs",
+    "Outputs",
     "Fanin-1",
     "Fanin-2",
     "Fanin-3",
@@ -111,56 +113,96 @@ def measure_wire_complexity(ckt_graph):
     # not be considered
     return wire_count - len(ckt_graph.inputs)
 
-def measure_metrics(ckt_graph, logger):
-    logger.log_detailed("\nNumber of gates: %i" % (ckt_graph.size))
-    logger.log_detailed("Number of inputs: %i" % (len(ckt_graph.inputs)))
-    logger.log_detailed("Number of outputs: %i" % (len(ckt_graph.outputs)))
+def display_results(metrics, logger):
+    logger.log_detailed("Number of gates: %i" % (metrics["size"]))
+    logger.log_detailed("Number of inputs: %s" % (str(metrics["input_count"])))
+    logger.log_detailed("Number of outputs: %s" % (str(metrics["output_count"])))
+
+    logger.log_detailed("\nAverage fanin (1): %.2f" % (metrics["fanin_1"]))
+    logger.log_detailed("Average fanin (2): %.2f" % (metrics["fanin_2"]))
+    logger.log_detailed("Average fanin (3): %.2f" % (metrics["fanin_3"]))
+
+    logger.log_detailed("\nAverage fanout (1): %.2f" % (metrics["fanout_1"]))
+    logger.log_detailed("Average fanout (2): %.2f" % (metrics["fanout_2"]))
+    logger.log_detailed("Average fanout (3): %.2f" % (metrics["fanout_3"]))
+
+    logger.log_detailed("\nDepth: %s (%s)" % (str(metrics["depth"]), "LONGEST OUTPUT PLACEHOLDER"))
+
+    logger.log_detailed("\nAverage number of nodes affected by input: %.2f" % (metrics["input_size_avg"]))
+    logger.log_detailed("Max number of nodes affected by input: %s" % (str(metrics["input_size_max"])))
+
+    logger.log_detailed("Average size of output sub-tree: %.2f" % (metrics["output_size_avg"]))
+    logger.log_detailed("Max size of output sub-tree: %s (%s)" % (str(metrics["output_size_max"]), "OUTPUT SIZE NAME PLACEHOLDER"))
+
+    # logger.log_detailed("\nDistribution of types of gates:")
+    # types = measure_gate_types(ckt_graph)
+    # for t in types:
+    #     logger.log_detailed(" - %s: %i" % (t, types[t]))
+
+    logger.log_detailed("\nWire complexity: %s" % (str(metrics["wire_complexity"])))
+
+    logger.log_terse(",".join(str(x) for x in metrics.values()))
+    # logger.log_terse("%i,%i,%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%.2f,%i,%.2f,%i,%i" % (size, input_count, output_count, fanin_1, fanin_2, fanin_3, fanout_1, fanout_2, fanout_3, depth, input_size_avg, input_size_max, output_size_avg, output_size_max, wire_complexity))
+
+
+def measure_metrics(ckt_graph, logger, normalized):
+    size = ckt_graph.size
+    input_count = len(ckt_graph.inputs)
+    output_count = len(ckt_graph.outputs)
 
     fanin_1 = measure_fanin(ckt_graph, 1)
     fanin_2 = measure_fanin(ckt_graph, 2)
     fanin_3 = measure_fanin(ckt_graph, 3)
-    logger.log_detailed("\nAverage fanin (1): %.2f" % (fanin_1))
-    logger.log_detailed("\nAverage fanin (2): %.2f" % (fanin_2))
-    logger.log_detailed("\nAverage fanin (3): %.2f" % (fanin_3))
 
     fanout_nodes_1 = measure_fanout(ckt_graph, 1, {key: set() for key in ckt_graph.non_inputs()})
     fanout_count_1 = [len(v) for v in fanout_nodes_1.values()]
     fanout_1 = sum(fanout_count_1) / len(fanout_count_1)
-    logger.log_detailed("Average fanout (1): %.2f" % (fanout_1))
 
     fanout_nodes_2 = measure_fanout(ckt_graph, 2, {key: set() for key in ckt_graph.non_inputs()})
     fanout_count_2 = [len(v) for v in fanout_nodes_2.values()]
     fanout_2 = sum(fanout_count_2) / len(fanout_count_2)
-    logger.log_detailed("Average fanout (2): %.2f" % (fanout_2))
 
     fanout_nodes_3 = measure_fanout(ckt_graph, 3, {key: set() for key in ckt_graph.non_inputs()})
     fanout_count_3 = [len(v) for v in fanout_nodes_3.values()]
     fanout_3 = sum(fanout_count_3) / len(fanout_count_3)
-    logger.log_detailed("Average fanout (3): %.2f" % (fanout_3))
 
     longest_output, depth, output_tree_sizes = find_depth(ckt_graph)
-    logger.log_detailed("\nDepth: %i (%s)" % (depth, longest_output))
 
-    input_prop = measure_input_propagation(fanout_nodes_1, ckt_graph)
-    avg_input_prop = sum(input_prop) / len(input_prop)
-    logger.log_detailed("\nAverage number of nodes affected by input: %.2f" % (sum(input_prop) / len(input_prop)))
-    logger.log_detailed("Max number of nodes affected by input: %i" % (max(input_prop)))
+    input_size = measure_input_propagation(fanout_nodes_1, ckt_graph)
+    input_size_avg = sum(input_size) / len(input_size)
+    input_size_max = max(input_size)
 
-    logger.log_detailed("Average size of output sub-tree: %.2f" % (sum(output_tree_sizes.values()) / len(output_tree_sizes)))
-    max_output = max(output_tree_sizes, key=output_tree_sizes.get)
-    avg_output_size = sum(output_tree_sizes.values()) / len(output_tree_sizes)
-    logger.log_detailed("Max size of output sub-tree: %i (%s)" % (max(output_tree_sizes.values()), max_output))
-
-
-    logger.log_detailed("\nDistribution of types of gates:")
-    types = measure_gate_types(ckt_graph)
-    for t in types:
-        logger.log_detailed(" - %s: %i" % (t, types[t]))
+    output_size_avg = sum(output_tree_sizes.values()) / len(output_tree_sizes)
+    output_size_max = max(output_tree_sizes.values())
+    output_size_max_name = max(output_tree_sizes, key=output_tree_sizes.get)
 
     wire_complexity = measure_wire_complexity(ckt_graph)
-    logger.log_detailed("\nWire complexity: %i" % (wire_complexity))
 
-    logger.log_terse("%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%.2f,%i,%.2f,%i,%i" % (ckt_graph.size, fanin_1, fanin_2, fanin_3, fanout_1, fanout_2, fanout_3, depth, avg_input_prop, max(input_prop), avg_output_size, max(output_tree_sizes.values()), wire_complexity))
+    metrics = {
+        "size": size,
+        "input_count": input_count,
+        "output_count": output_count,
+        "fanin_1": fanin_1,
+        "fanin_2": fanin_2,
+        "fanin_3": fanin_3,
+        "fanout_1": fanout_1,
+        "fanout_2": fanout_2,
+        "fanout_3": fanout_3,
+        "depth": depth,
+        "input_size_avg": input_size_avg,
+        "input_size_max": input_size_max,
+        "output_size_avg": output_size_avg,
+        "output_size_max": output_size_max,
+        "wire_complexity": wire_complexity
+    }
+
+    normalized_metrics = {k: v/metrics["size"] for k, v in metrics.items()}
+    normalized_metrics["size"] = size
+
+    if normalized:
+        display_results(normalized_metrics, logger)
+    else:
+        display_results(metrics, logger)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Measure structural metrics on a circuit.")
@@ -168,6 +210,7 @@ if __name__ == "__main__":
     parser.add_argument("--csv", action="store_true", help="Output the metrics in a CSV format")
     parser.add_argument("--csv_header", action="store_true", help="Output the metric names as a header of the CSV file")
     parser.add_argument("--debug", action="store_true", help="Output debug info")
+    parser.add_argument("--normalized", action="store_true", help="Output normalized metrics with respect to the number of gates in the circuit")
 
     args = parser.parse_args()
 
@@ -184,4 +227,4 @@ if __name__ == "__main__":
     if args.csv_header:
         logger.log_terse(",".join(HEADERS))
 
-    measure_metrics(ckt_graph, logger)
+    measure_metrics(ckt_graph, logger, args.normalized)
