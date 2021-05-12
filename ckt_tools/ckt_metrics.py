@@ -8,6 +8,7 @@ from ast_parser import parse_ast
 from dfs import find_depth
 from node_type import NodeType
 from logger import Logger
+from structural_metrics.reconvergence import measure_reconvergence
 from z3_builder import Z3Builder
 
 HEADERS = [
@@ -25,7 +26,8 @@ HEADERS = [
     "Input Size (Max)",
     "Output Size (Avg)",
     "Output Size (Max)",
-    "Wire Complexity"
+    "Wire Complexity",
+    "Reconvergence"
 ]
 
 def measure_fanin_single_gate(ckt_graph, node, depth):
@@ -141,6 +143,8 @@ def display_results(metrics, logger):
 
     logger.log_detailed("\nWire complexity: %s" % (str(metrics["wire_complexity"])))
 
+    logger.log_detailed("\nReconvergence: %s" % (str(metrics["reconvergence"])))
+
     logger.log_terse(",".join(str(x) for x in metrics.values()))
     # logger.log_terse("%i,%i,%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%.2f,%i,%.2f,%i,%i" % (size, input_count, output_count, fanin_1, fanin_2, fanin_3, fanout_1, fanout_2, fanout_3, depth, input_size_avg, input_size_max, output_size_avg, output_size_max, wire_complexity))
 
@@ -178,6 +182,8 @@ def measure_metrics(ckt_graph, logger, normalized):
 
     wire_complexity = measure_wire_complexity(ckt_graph)
 
+    reconvergence = measure_reconvergence(ckt_graph)
+
     metrics = {
         "size": size,
         "input_count": input_count,
@@ -193,11 +199,13 @@ def measure_metrics(ckt_graph, logger, normalized):
         "input_size_max": input_size_max,
         "output_size_avg": output_size_avg,
         "output_size_max": output_size_max,
-        "wire_complexity": wire_complexity
+        "wire_complexity": wire_complexity,
+        "reconvergence": reconvergence
     }
 
     normalized_metrics = {k: v/metrics["size"] for k, v in metrics.items()}
     normalized_metrics["size"] = size
+    normalized_metrics["reconvergence"] = reconvergence
 
     if normalized:
         display_results(normalized_metrics, logger)
