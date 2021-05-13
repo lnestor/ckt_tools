@@ -33,6 +33,8 @@ def _meas_recon_single_node(ckt_graph, node, recon, node_fanins):
 
     if len(total_fanin) == 0:
         recon[node.output] = 0.0
+    elif len(children) == 1:
+        recon[node.output] = 0.0
     else:
         recon[node.output] = len(intersection) / len(total_fanin)
 
