@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 
 def plot_components(x, i1, i2):
     plt.scatter(x[:,i1], x[:,i2])
+    plt.title("Index 1: %i, Index 2: %i" % (i1, i2))
+    plt.xlim(x.min(), x.max())
+    plt.ylim(x.min(), x.max())
     # plt.xlim(-6, 6)
     # plt.ylim(-6, 6)
     plt.show()
