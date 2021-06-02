@@ -229,7 +229,7 @@ if __name__ == "__main__":
     logger.log_detailed("Parsing complete\n")
 
     logger.log_detailed("Parsing AST...")
-    ckt_graph = parse_ast(ast)
+    ckt_graph = parse_ast(ast, ignore_assigns=True)
     logger.log_detailed("Parsing complete\n")
 
     if args.csv_header:

@@ -4,7 +4,7 @@ from node import Node
 from node_type import NodeType
 from circuit_graph import CircuitGraph
 
-def parse_ast(ast):
+def parse_ast(ast, ignore_assigns=False):
     """Parses a Verilog abstract syntax tree into a CircuitGraph.
 
     Args:
@@ -16,7 +16,7 @@ def parse_ast(ast):
     """
     ast_parser = ASTParser()
 
-    return ast_parser.parse(ast)
+    return ast_parser.parse(ast, ignore_assigns=ignore_assigns)
 
 class ASTParser():
     def __init__(self):
@@ -25,7 +25,7 @@ class ASTParser():
         self.inputs = []
         self.assigns = []
 
-    def parse(self, ast):
+    def parse(self, ast, ignore_assigns=False):
         """Parses a Verilog AST into a Circuit Graph.
 
         Args:
@@ -44,7 +44,8 @@ class ASTParser():
             elif isinstance(child, vast.InstanceList):
                 self._parse_instance_list(child)
             elif isinstance(child, vast.Assign):
-                self._parse_assign(child)
+                if not ignore_assigns:
+                    self._parse_assign(child)
             else:
                 import pdb; pdb.set_trace()
 

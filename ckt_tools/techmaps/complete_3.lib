@@ -1,4 +1,4 @@
-library(nand_only) {
+library(complete_3) {
   cell(BUF) {
     pin(A) { direction: input; }
     pin(Y) { direction: output;
@@ -12,37 +12,43 @@ library(nand_only) {
   cell(AND) {
       pin(A) { direction: input; }
       pin(B) { direction: input; }
+      pin(C) { direction: input; }
       pin(Y) { direction: output;
-                function: "(A*B)"; }
+                function: "(A*B*C)"; }
   }
   cell(OR) {
       pin(A) { direction: input; }
       pin(B) { direction: input; }
+      pin(C) { direction: input; }
       pin(Y) { direction: output;
-                function: "(A+B)"; }
+                function: "(A+B+C)"; }
   }
   cell(NAND) {
       pin(A) { direction: input; }
       pin(B) { direction: input; }
+      pin(C) { direction: input; }
       pin(Y) { direction: output;
-                function: "(A*B)'"; }
+                function: "(A*B*C)'"; }
   }
   cell(NOR) {
       pin(A) { direction: input; }
       pin(B) { direction: input; }
+      pin(C) { direction: input; }
       pin(Y) { direction: output;
-                function: "(A+B)'"; }
+                function: "(A+B+C)'"; }
   }
   cell(XNOR) {
       pin(A) { direction: input; }
       pin(B) { direction: input; }
+      pin(C) { direction: input; }
       pin(Y) { direction: output;
-                function: "(A^B)'"; }
+                function: "(A^B^C)'"; }
   }
   cell(XOR) {
       pin(A) { direction: input; }
       pin(B) { direction: input; }
+      pin(C) { direction: input; }
       pin(Y) { direction: output;
-                function: "(A^B)"; }
+                function: "(A^B^C)"; }
   }
 }
