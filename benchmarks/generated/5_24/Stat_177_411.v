@@ -2,7 +2,7 @@
 module C:\Users\Lucas Nestor\Documents\osu\sp21\esl\circuit_generation\Stats\5_24_randomized_params\Stat_177_411 ( n1, n2, n3, n4, n5, n6, n7, n8,
  n9, n10, n11, n12, n13, n14, n15, n16,
  n17, n18,
- n13, n192, n187, n186, n177, n194, n189, n190,
+ nCHANGED, n192, n187, n186, n177, n194, n189, n190,
  n195, n180, n184, n185, n179, n188, n178, n176,
  n193, n191, n181, n183, n182);
 

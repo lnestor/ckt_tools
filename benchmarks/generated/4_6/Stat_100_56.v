@@ -3,7 +3,7 @@ module C:\Users\Lucas Nestor\Documents\osu\sp21\esl\circuit_generation\Stats\4_6
  n9, n10, n11, n12, n13, n14, n15, n16,
  n17, n18, n19, n20, n21, n22, n23, n24,
  n25, n26, n27, n28, n29, n30, n31, n32,
- n10, n105, n120, n101, n102, n104, n117, n122,
+ nCHANGED, n105, n120, n101, n102, n104, n117, n122,
  n116, n123, n108, n99, n97, n121, n115, n95,
  n93, n107, n118, n98, n113, n106, n96, n109,
  n112, n114, n100, n128, n129, n130, n132, n131);
