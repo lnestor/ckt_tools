@@ -64,3 +64,4 @@ if __name__ == "__main__":
         y = y[1:]
 
         plot_dep_vars(projected, y, args.figures_dir)
+

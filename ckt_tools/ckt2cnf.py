@@ -77,7 +77,7 @@ if __name__ == "__main__":
     logger.log_detailed("Parsing complete\n")
 
     logger.log_detailed("Parsing AST...")
-    ckt_graph = parse_ast(ast)
+    ckt_graph = parse_ast(ast, ignore_assigns=False)
     logger.log_detailed("Parsing complete\n")
 
     logger.log_detailed("Building circuit...")

@@ -23,7 +23,7 @@ class Node:
             return False
 
     def __repr__(self):
-        return "%s = %s(%s)" % (self.output, self.type, ",".join(self.inputs))
+        return "%s = %s(%s)" % (self.output, self.type, ",".join(map(str, self.inputs)))
 
     def __str__(self):
-        return "%s = %s(%s)" % (self.output, self.type, ",".join(self.inputs))
+        return "%s = %s(%s)" % (self.output, self.type, ",".join(map(self.inputs)))

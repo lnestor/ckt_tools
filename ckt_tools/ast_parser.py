@@ -214,7 +214,16 @@ class ASTParser():
             LHS = self.nodes[name].output
 
             if prev_name is None:
-                # Occurs only when name is an output, we rename the output and move on
+                # Occurs only when name is an output
+
+                # If output is only hooked up to a constant, ignore that output
+                # The synth gen tool does this a lot
+                if isinstance(RHS, int):
+                    self.nodes[name].type = "buf"
+                    self.assigns.remove(name)
+                    return
+
+                # Rename the output and move on
                 self.outputs = [RHS if o == LHS else o for o in self.outputs]
                 self._remove_assigns(RHS, prev_name, visited)
             elif prev_name in self.nodes:
