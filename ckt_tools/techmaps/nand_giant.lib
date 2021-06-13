@@ -1,0 +1,75 @@
+library(complete_giant) {
+  cell(BUF) {
+    pin(A) { direction: input; }
+    pin(Y) { direction: output;
+              function: "A"; }
+  }
+  cell(NOT) {
+    pin(A) { direction: input; }
+    pin(Y) { direction: output;
+              function: "A'"; }
+  }
+  cell(NAND2) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A*B)'"; }
+  }
+  cell(NAND3) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A*B*C)'"; }
+  }
+  cell(NAND4) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(D) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A*B*C*D)'"; }
+  }
+  cell(NAND5) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(D) { direction: input; }
+      pin(E) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A*B*C*D*E)'"; }
+  }
+  cell(NAND6) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(D) { direction: input; }
+      pin(E) { direction: input; }
+      pin(F) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A*B*C*D*E*F)'"; }
+  }
+  cell(NAND7) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(D) { direction: input; }
+      pin(E) { direction: input; }
+      pin(F) { direction: input; }
+      pin(G) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A*B*C*D*E*F*G)'"; }
+  }
+  cell(NAND8) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(D) { direction: input; }
+      pin(E) { direction: input; }
+      pin(F) { direction: input; }
+      pin(G) { direction: input; }
+      pin(H) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A*B*C*D*E*F*G*H)'"; }
+  }
+}

@@ -1,0 +1,75 @@
+library(complete_giant) {
+  cell(BUF) {
+    pin(A) { direction: input; }
+    pin(Y) { direction: output;
+              function: "A"; }
+  }
+  cell(NOT) {
+    pin(A) { direction: input; }
+    pin(Y) { direction: output;
+              function: "A'"; }
+  }
+  cell(NOR2) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A+B)'"; }
+  }
+  cell(NOR3) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A+B+C)'"; }
+  }
+  cell(NOR4) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(D) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A+B+C+D)'"; }
+  }
+  cell(NOR5) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(D) { direction: input; }
+      pin(E) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A+B+C+D+E)'"; }
+  }
+  cell(NOR6) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(D) { direction: input; }
+      pin(E) { direction: input; }
+      pin(F) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A+B+C+D+E+F)'"; }
+  }
+  cell(NOR7) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(D) { direction: input; }
+      pin(E) { direction: input; }
+      pin(F) { direction: input; }
+      pin(G) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A+B+C+D+E+F+G)'"; }
+  }
+  cell(NOR8) {
+      pin(A) { direction: input; }
+      pin(B) { direction: input; }
+      pin(C) { direction: input; }
+      pin(D) { direction: input; }
+      pin(E) { direction: input; }
+      pin(F) { direction: input; }
+      pin(G) { direction: input; }
+      pin(H) { direction: input; }
+      pin(Y) { direction: output;
+                function: "(A+B+C+D+E+F+G+H)'"; }
+  }
+}
