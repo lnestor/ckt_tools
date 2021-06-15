@@ -47,19 +47,29 @@ def measure_metrics(z3_ckt, logger):
 
         num_variables.append(len(variables))
 
+    if len(num_clauses) != len(num_variables):
+        # This might happen but I'm not sure, adding this in
+        # to make debugging easier
+        import pdb; pdb.set_trace()
+
+    ratio = [c / v for c, v in zip(num_clauses, num_variables)]
+
     avg_clauses = sum(num_clauses) / len(num_clauses)
     max_clauses = max(num_clauses)
     avg_variables = sum(num_variables) / len(num_variables)
     max_variables = max(num_variables)
+    avg_ratio = sum(ratio) / len(ratio)
 
-    metrics = (avg_clauses, max_clauses, avg_variables, max_variables)
+    metrics = (avg_clauses, max_clauses, avg_variables, max_variables, avg_ratio)
     logger.log_detailed("Average number of clauses: %.2f" % (metrics[0]))
     logger.log_detailed("Max number of clauses: %i" % (metrics[1]))
 
     logger.log_detailed("Average number of variables: %.2f" % (metrics[2]))
     logger.log_detailed("Max number of variables: %i" % (metrics[3]))
 
-    logger.log_terse("%.2f,%i,%.2f,%i" % metrics)
+    logger.log_detailed("Average clause/variable ratio: %.2f" % (metrics[4]))
+
+    logger.log_terse("%.2f,%i,%.2f,%i,%.2f" % metrics)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert a verilog circuit into a CNF formula and measure metrics on that formula")
