@@ -1,9 +1,8 @@
 import argparse
-from pyverilog.vparser.parser import parse
+from pyverilog.ast_code_generator.codegen import ASTCodeGenerator
 import pyverilog.vparser.ast as vast
+from pyverilog.vparser.parser import parse
 import random
-
-from ast_parser import parse_ast
 
 def key_input_name(index):
     return "keyIn_0_%i" % (index)
@@ -11,6 +10,8 @@ def key_input_name(index):
 def key_gate_wire_name(index):
     return "KeyWire_0_%i" % (index)
 
+def key_gate_type(negated):
+    return "xor" if negated == 0 else "xnor"
 
 def build_key_node(module, output_name, index):
     xor_instance_name = "KeyGate_0_%i" % (index)
@@ -29,16 +30,16 @@ def build_key_node(module, output_name, index):
 
     return ilist
 
-def add_key_nodes(base, index, moddef):
+# Add in NOT gates at some point
+# Do I need to worry about line numbers?
+def add_key_nodes(base, index, moddef, negated):
     portargs = base.children()[0].children()
     # This won't work if output is not in first spot
     output_name = portargs[0].argname.name
     module = base.module
 
-    key_node = build_key_node("xor", output_name, index)
+    key_node = build_key_node(key_gate_type(negated), output_name, index)
     portargs[0].argname.name = key_gate_wire_name(index)
-
-    # Decide on xor or xnor eventually
 
     input_decl = moddef.children()[2]
     inputs = list(input_decl.list)
@@ -53,10 +54,6 @@ def add_key_nodes(base, index, moddef):
     items = list(moddef.items)
     items.append(key_node)
     moddef.items = tuple(items)
-
-    # Do I need to worry about line numbers?
-
-    import pdb; pdb.set_trace()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert a verilog circuit into a CNF formula and measure metrics on that formula")
@@ -75,8 +72,9 @@ if __name__ == "__main__":
     chosen = list(map(nodes.__getitem__, random.sample(range(0, len(nodes)), args.key_length)))
 
     for i, node in enumerate(chosen):
-        add_key_nodes(node, i, moddef)
+        negated = random.randint(0, 1) # 0 = xor, 1 = xnor
+        add_key_nodes(node, i, moddef, negated)
 
-    import pdb; pdb.set_trace()
-
-    # ckt_graph = parse_ast(ast, ignore_assigns=False)
+    codegen = ASTCodeGenerator()
+    rslt = codegen.visit(ast)
+    print(rslt)
