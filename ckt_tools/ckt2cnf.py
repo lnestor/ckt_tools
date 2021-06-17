@@ -45,7 +45,8 @@ def measure_metrics(z3_ckt, logger):
         if len(cnf) != 0:
             num_clauses.append(len(cnf))
 
-        num_variables.append(len(variables))
+        if len(variables) != 0:
+            num_variables.append(len(variables))
 
     if len(num_clauses) != len(num_variables):
         # This might happen but I'm not sure, adding this in
