@@ -1,5 +1,5 @@
 // Benchmark C:\Users\Lucas Nestor\Documents\osu\sp21\esl\circuit_generation\Stats\6_15_large_circuits\Stat_3904_76_2 written by SynthGen on 2021/06/15 15:06:24
-module C:\Users\Lucas Nestor\Documents\osu\sp21\esl\circuit_generation\Stats\6_15_large_circuits\Stat_3904_76_2 ( n1, n2, n3, n4, n5, n6, n7, n8,
+module Stat_3904_76_2( n1, n2, n3, n4, n5, n6, n7, n8,
  n9, n10, n11, n12, n13, n14, n15, n16,
  n17, n18, n19, n20,
  n3042, n3044, n3032, n3049, n3353, n3348, n3345, n3351,

@@ -1,5 +1,5 @@
 // Benchmark C:\Users\Lucas Nestor\Documents\osu\sp21\esl\circuit_generation\Stats\5_24_randomized_params\Stat_393_1615 written by SynthGen on 2021/05/24 19:47:35
-module C:\Users\Lucas Nestor\Documents\osu\sp21\esl\circuit_generation\Stats\5_24_randomized_params\Stat_393_1615 ( n1, n2, n3, n4, n5, n6, n7, n8,
+module Stat_393_1615( n1, n2, n3, n4, n5, n6, n7, n8,
  n9, n10, n11, n12, n13, n14, n15, n16,
  n17, n18,
  n153, n158, n151, n140, n155, n354, n381, n386,
