@@ -10,7 +10,8 @@ HEADERS = [
     "Clauses/Output (Avg)",
     "Clauses/Output (Max)",
     "Variables/Output (Avg)",
-    "Variables/Output (Max)"
+    "Variables/Output (Max)",
+    "Clause/Variable Ratio"
 ]
 
 def measure_metrics(z3_ckt, logger):
