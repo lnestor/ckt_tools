@@ -69,10 +69,11 @@ if __name__ == "__main__":
         sat = read_csv_with_labels(sat_filename)
 
     # Note: This assumes that all appended directories have struct and CNF metrics
-    a_structs = [read_csv_with_labels("%s/metrics/struct.csv" % (s)) for s in args.append]
-    a_pcs = [apply_pca_transform(s, scaler, pca) for s in a_structs]
-    a_pc1s = [{k: v[0] for k, v in pc.items()} for pc in a_pcs]
-    a_cnfs = [read_csv_with_labels("%s/metrics/cnf.csv" % (s)) for s in args.append]
+    if args.append is not None:
+        a_structs = [read_csv_with_labels("%s/metrics/struct.csv" % (s)) for s in args.append]
+        a_pcs = [apply_pca_transform(s, scaler, pca) for s in a_structs]
+        a_pc1s = [{k: v[0] for k, v in pc.items()} for pc in a_pcs]
+        a_cnfs = [read_csv_with_labels("%s/metrics/cnf.csv" % (s)) for s in args.append]
 
     ### Plot below here ###
     # import pdb; pdb.set_trace()
