@@ -16,7 +16,7 @@ def read_csv_with_labels(filename):
     return {label: list(row)[1:] for label, row in zip(labels[1:], data)}
 
 def apply_pca_transform(data, scaler, pca):
-    scaled_data = scaler.fit_transform(list(data.values()))
+    scaled_data = scaler.transform(list(data.values()))
     scaled = {k: v for k, v in zip(list(data.keys()), scaled_data)}
 
     pc_data = pca.transform(list(scaled.values()))
