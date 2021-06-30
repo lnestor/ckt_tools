@@ -10,9 +10,12 @@ def plot_obf_change(o_pc1, pc1, o_cnf, cnf, cnf_index):
     new_cnf_metric = [cnf[k][cnf_index] for k in o_pc1]
 
     plt.plot([old_pc1, new_pc1], [old_cnf_metric, new_cnf_metric], color="gray", alpha=0.5)
-    plt.scatter(old_pc1, old_cnf_metric, color="blue", s=12)
-    plt.scatter(new_pc1, new_cnf_metric, color="red", s=12, marker="x")
+    plt.scatter(old_pc1, old_cnf_metric, color="blue", s=12, label="Original")
+    plt.scatter(new_pc1, new_cnf_metric, color="red", s=12, marker="x", label="New")
     plt.title("Obfuscation Changes to Circuit CNF Formula")
+
+    plt.legend()
+    plt.xlabel("PC1")
     plt.show()
 
 def plot_multi_obf_change(pcs, cnfs, cnf_index):
