@@ -4,7 +4,7 @@
 header="--csv_header"
 
 for FILE in $1/*.v; do
-  python ckt_tools/ckt_metrics $file --csv $header
+  python ckt_tools/ckt_metrics.py $FILE --csv $header
 
   header=""
 done

@@ -7,6 +7,7 @@ from logger import Logger
 from z3_builder import Z3Builder
 
 HEADERS = [
+    "Name",
     "Clauses/Output (Avg)",
     "Clauses/Output (Max)",
     "Variables/Output (Avg)",
@@ -14,7 +15,7 @@ HEADERS = [
     "Clause/Variable Ratio"
 ]
 
-def measure_metrics(z3_ckt, logger):
+def measure_metrics(z3_ckt, logger, filename):
     num_clauses = []
     num_variables = []
 
@@ -62,16 +63,16 @@ def measure_metrics(z3_ckt, logger):
     max_variables = max(num_variables)
     avg_ratio = sum(ratio) / len(ratio)
 
-    metrics = (avg_clauses, max_clauses, avg_variables, max_variables, avg_ratio)
-    logger.log_detailed("Average number of clauses: %.2f" % (metrics[0]))
-    logger.log_detailed("Max number of clauses: %i" % (metrics[1]))
+    metrics = (filename, avg_clauses, max_clauses, avg_variables, max_variables, avg_ratio)
+    logger.log_detailed("Average number of clauses: %.2f" % (metrics[1]))
+    logger.log_detailed("Max number of clauses: %i" % (metrics[2]))
 
-    logger.log_detailed("Average number of variables: %.2f" % (metrics[2]))
-    logger.log_detailed("Max number of variables: %i" % (metrics[3]))
+    logger.log_detailed("Average number of variables: %.2f" % (metrics[3]))
+    logger.log_detailed("Max number of variables: %i" % (metrics[4]))
 
-    logger.log_detailed("Average clause/variable ratio: %.2f" % (metrics[4]))
+    logger.log_detailed("Average clause/variable ratio: %.2f" % (metrics[5]))
 
-    logger.log_terse("%.2f,%i,%.2f,%i,%.2f" % metrics)
+    logger.log_terse("%s,%.2f,%i,%.2f,%i,%.2f" % metrics)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert a verilog circuit into a CNF formula and measure metrics on that formula")
@@ -102,5 +103,5 @@ if __name__ == "__main__":
     if args.csv_header:
         logger.log_terse(",".join(HEADERS))
 
-    measure_metrics(z3_ckt, logger)
+    measure_metrics(z3_ckt, logger, args.verilog_file)
 

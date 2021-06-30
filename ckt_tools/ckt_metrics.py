@@ -12,6 +12,7 @@ from structural_metrics.reconvergence import measure_reconvergence
 from z3_builder import Z3Builder
 
 HEADERS = [
+    "Name",
     "Size",
     "Inputs",
     "Outputs",
@@ -149,7 +150,7 @@ def display_results(metrics, logger):
     # logger.log_terse("%i,%i,%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%.2f,%i,%.2f,%i,%i" % (size, input_count, output_count, fanin_1, fanin_2, fanin_3, fanout_1, fanout_2, fanout_3, depth, input_size_avg, input_size_max, output_size_avg, output_size_max, wire_complexity))
 
 
-def measure_metrics(ckt_graph, logger, normalized):
+def measure_metrics(ckt_graph, logger, normalized, name):
     size = ckt_graph.size
     input_count = len(ckt_graph.inputs)
     output_count = len(ckt_graph.outputs)
@@ -185,6 +186,7 @@ def measure_metrics(ckt_graph, logger, normalized):
     reconvergence = measure_reconvergence(ckt_graph)
 
     metrics = {
+        "name": name,
         "size": size,
         "input_count": input_count,
         "output_count": output_count,
@@ -203,9 +205,9 @@ def measure_metrics(ckt_graph, logger, normalized):
         "reconvergence": reconvergence
     }
 
-    normalized_metrics = {k: v/metrics["size"] for k, v in metrics.items()}
-    normalized_metrics["size"] = size
-    normalized_metrics["reconvergence"] = reconvergence
+    # normalized_metrics = {k: v/metrics["size"] if not isinstance(v, str) else v for k, v in metrics.items()}
+    # normalized_metrics["size"] = size
+    # normalized_metrics["reconvergence"] = reconvergence
 
     if normalized:
         display_results(normalized_metrics, logger)
@@ -235,4 +237,4 @@ if __name__ == "__main__":
     if args.csv_header:
         logger.log_terse(",".join(HEADERS))
 
-    measure_metrics(ckt_graph, logger, args.normalized)
+    measure_metrics(ckt_graph, logger, args.normalized, args.verilog_file)
