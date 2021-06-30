@@ -9,6 +9,7 @@ then
 fi
 
 for FILE in $1/*.v; do
-  filename="$(basename $FILE .v)__lib_$(basename $3 .lib).v"
+  # filename="$(basename $FILE .v)__lib_$(basename $3 .lib).v"
+  filename="$(basename $FILE)"
   python ckt_tools/yosys.py $FILE $2/$filename $liberty
 done
