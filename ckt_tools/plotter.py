@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 import os
+import random
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
@@ -74,11 +75,36 @@ if __name__ == "__main__":
         a_pcs = [apply_pca_transform(s, scaler, pca) for s in a_structs]
         a_pc1s = [{k: v[0] for k, v in pc.items()} for pc in a_pcs]
         a_cnfs = [read_csv_with_labels("%s/metrics/cnf.csv" % (s)) for s in args.append]
+        a_sats = [read_csv_with_labels("%s/metrics/sat.csv" % (s)) for s in args.append]
 
     ### Plot below here ###
     # import pdb; pdb.set_trace()
     # obf_change.plot_obf_change(o_pc1, pc1, o_cnf, cnf, 0)
-    obf_change.plot_multi_obf_change([o_pc1, pc1, a_pc1s[0], a_pc1s[1]], [o_cnf, cnf, a_cnfs[0], a_cnfs[1]], 0)
+    # o_pc1 = dict(filter(lambda k: o_pc1[k[0]] > 5, o_pc1.items()))
+    # import pdb; pdb.set_trace()
+    # o_pc1 = dict(random.sample(list(o_pc1.items()), 16))
+
+    # import pdb; pdb.set_trace()
+    inf_times = list(filter(lambda k: sat[k][0] > 8000, sat))
+    for name in inf_times:
+        sat[name][0] = 8000
+
+    # sat_attack_times.plot_sat_times_3D(sat, o_pc1, o_pc2)
+    # sat_attack_times.plot_2D(sat, o_pc1)
+    sat_attack_times.plot_diff(sat, a_sats[0], pc1, a_pc1s[0])
+
+    ###
+    # Function to copy values from one dict to another
+    # pc1 = {k: pc1[k] for k in o_pc1}
+    # a_pc1s[0] = {k: a_pc1s[0][k] for k in o_pc1}
+    # a_pc1s[1] = {k: a_pc1s[1][k] for k in o_pc1}
+
+    # o_cnf = {k: o_cnf[k] for k in o_pc1}
+    # cnf = {k: cnf[k] for k in o_pc1}
+    # a_cnfs[0] = {k: a_cnfs[0][k] for k in o_pc1}
+    # a_cnfs[1] = {k: a_cnfs[1][k] for k in o_pc1}
+    # # import pdb; pdb.set_trace()
+    # obf_change.plot_multi_obf_change([o_pc1, pc1, a_pc1s[0], a_pc1s[1]], [o_cnf, cnf, a_cnfs[0], a_cnfs[1]], 0, ["Original", "RLL16", "RLL32", "RLL64"])
 
     # import pdb; pdb.set_trace()
 
