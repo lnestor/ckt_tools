@@ -1,6 +1,6 @@
 import z3
 
-from sat_attack.model import extract
+from sat.model import extract
 from z3_builder import Z3Builder
 
 class DipFinder:

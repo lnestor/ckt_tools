@@ -4,13 +4,13 @@ import time
 import z3
 
 from ast_parser import parse_ast
-from sat_attack.circuit_solver import CircuitSolver
-from sat_attack.dip_finder import DipFinder
-from sat_attack.logger import Logger
-from sat_attack.model import extract
+from sat.circuit_solver import CircuitSolver
+from sat.dip_finder import DipFinder
+from sat.logger import Logger
+from sat.model import extract
 from z3_builder import Z3Builder
 
-def run(locked_graph, oracle_graph, logger):
+def attack(locked_graph, oracle_graph, logger):
     dip_finder = DipFinder(locked_graph)
     oracle_solver = CircuitSolver(Z3Builder().build(oracle_graph)[0])
 
@@ -80,6 +80,25 @@ def key_str(key):
 
     return key_string
 
+def run(locked_file, oracle_file, csv_file=None):
+    logger = Logger(locked_file)
+
+    logger.log("Reading in circuits. ", end="")
+    locked_ast, _ = parse([locked_file], debug=False)
+    oracle_ast, _ = parse([oracle_file], debug=False)
+
+    locked_graph = parse_ast(locked_ast)
+    oracle_graph = parse_ast(oracle_ast)
+    logger.log_raw("Done.")
+
+    start = time.time()
+    iterations, match = attack(locked_graph, oracle_graph, logger)
+    end = time.time()
+
+    if csv_file is not None:
+        with open(csv_file, "a") as f:
+            f.write("%s,%f,%i,%i\n" % (locked_file, end - start, iterations, match))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a SAT attack.")
     parser.add_argument("locked_file", help="The locked verilog file.")
@@ -88,23 +107,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    logger = Logger(args.locked_file)
+    run(args.locked_file, args.oracle, csv_file=args.csv)
 
-    logger.log("Reading in circuits. ", end="")
-    locked_ast, _ = parse([args.locked_file], debug=False)
-    oracle_ast, _ = parse([args.oracle], debug=False)
-
-    locked_graph = parse_ast(locked_ast)
-    oracle_graph = parse_ast(oracle_ast)
-    logger.log_raw("Done.")
-
-    start = time.time()
-    iterations, match = run(locked_graph, oracle_graph, logger)
-    end = time.time()
-
-    if args.csv:
-        with open(args.csv, "a") as f:
-            f.write("%s,%f,%i,%i\n" % (args.locked_file, end - start, iterations, match))
 
 
 
