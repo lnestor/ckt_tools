@@ -6,11 +6,13 @@ class Z3Builder():
 
     """
 
-    def build(self, graph):
+    def build(self, graph, key_suffix="", input_map={}):
         """Builds a z3 representation of a circuit.
 
         Parameters:
             graph: the CircuitGraph representing the circuit
+            key_suffix: optional suffix to add to the end of all key inputs
+            input_map: optional literal replacement for input values
 
         Returns:
             dict: outputs in the form of {output_name: z3}
@@ -19,6 +21,8 @@ class Z3Builder():
         """
         self.z3_repr = {}
         self.inputs = []
+        self.key_suffix = key_suffix
+        self.input_map = input_map
         outputs = {}
 
         for name in graph.outputs:
@@ -66,8 +70,12 @@ class Z3Builder():
             name: the name of the input
 
         """
-        self.inputs.append(name)
-        self.z3_repr[name] = z3.Bool(name)
+        if name in self.input_map:
+            self.z3_repr[name] = self.input_map[name]
+        else:
+            bool_name = name if "key" not in name else name + self.key_suffix
+            self.inputs.append(bool_name)
+            self.z3_repr[name] = z3.Bool(bool_name)
 
     def _build_gate(self, node, fanin):
         """Builds the z3 representation for a logic gate node.

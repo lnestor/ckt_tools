@@ -16,6 +16,13 @@ class CircuitGraph:
     def non_inputs(self):
         return dict(filter(lambda x: x[1].type != NodeType.INPUT, self.nodes.items()))
 
+    def key_inputs(self):
+        return list(filter(lambda x: "key" in x, self.inputs))
+
+    def primary_inputs(self):
+        return list(filter(lambda x: "key" not in x, self.inputs))
+
+
     def __eq__(self, other):
         if isinstance(self, other.__class__):
             return self.nodes == other.nodes and self.outputs == other.outputs
