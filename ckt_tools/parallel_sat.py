@@ -1,6 +1,7 @@
 import argparse
 import multiprocessing as mp
 import os
+import queue
 import re
 import sys
 import time
@@ -77,24 +78,33 @@ if __name__ == "__main__":
     files.sort(key=lambda x: int(re.search("\d+", x).group()))
 
     p_args = [ProcessArgs(args, f, i, len(files)) for i, f in enumerate(files)]
+    p_args = p_args[0:12]
 
-    processes = [SATProcess(p_args[i]) for i in range(args.processes)]
+    processes = queue.Queue()
+    for i in range(args.processes):
+        processes.put(SATProcess(p_args[i]))
     i_next = args.processes
 
-    for p in processes:
+    for i in range(args.processes):
+        p = processes.get()
         p.start()
+        processes.put(p)
 
-    while True:
-        for i in range(len(processes)):
-            p = processes[i]
+    while not processes.empty():
+        p = processes.get()
 
-            if p.timed_out():
-                p.kill()
-                p.join()
+        if p.timed_out():
+            p.kill()
+            p.join()
 
-            if not p.is_alive():
-                p.join()
-                processes[i] = SATProcess(p_args[i_next],)
-                processes[i].start()
+        if p.is_alive():
+            processes.put(p)
+        else:
+            p.join()
+
+            if i_next < len(p_args):
+                p = SATProcess(p_args[i_next])
+                processes.put(p)
+                p.start()
 
                 i_next += 1
