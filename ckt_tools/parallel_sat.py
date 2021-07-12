@@ -63,26 +63,6 @@ def filenames(args, f):
 def run(locked_file, oracle_file, csv_file):
     sat_attack.run(locked_file, oracle_file, csv_file=csv_file)
 
-# def f(locked_file, oracle_file, csv_file):
-#     sat_attack.run(locked_file, oracle_file, csv_file=csv_file)
-
-# def run(args):
-#     basename = os.path.splitext(os.path.basename(args.locked_file))[0]
-#     print("(%s) Running SAT attack %i/%i (%.0f%%) " % (basename, args.i + 1, args.total, 100 * float(args.i) / args.total), end="")
-#     progress_bar(args.i + 1, args.total)
-
-#     p = mp.Process(target=f, args=(args.locked_file, args.oracle_file, args.csv_file,))
-#     p.start()
-
-#     start = time.time()
-#     while p.is_alive():
-#         if time.time() - start > args.timeout:
-#             p.kill()
-#             print("\nTERMINATED")
-#             break
-
-#     p.join()
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run SAT attacks against all benchmarks in a directory")
     parser.add_argument("locked_dir", help="The directory with the locked benchmarks.")
@@ -98,23 +78,11 @@ if __name__ == "__main__":
 
     p_args = [ProcessArgs(args, f, i, len(files)) for i, f in enumerate(files)]
 
-    # processes = [mp.Process(target=run, args=(p_args[i],)) for i in range(args.processes)]
     processes = [SATProcess(p_args[i]) for i in range(args.processes)]
     i_next = args.processes
 
     for p in processes:
         p.start()
-
-#     while True:
-#         for i in range(len(processes)):
-#             p = processes[i]
-
-#             if not p.is_alive():
-#                 p.join()
-#                 p = processes[i] = mp.Process(target=run, args=(p_args[i_next],))
-#                 p.start()
-
-#                 i_next += 1
 
     while True:
         for i in range(len(processes)):
@@ -130,36 +98,3 @@ if __name__ == "__main__":
                 processes[i].start()
 
                 i_next += 1
-
-    # with mp.Pool() as p:
-    #     p.map(run, p_args)
-
-    # to_retry = []
-    # for i, f in enumerate(files):
-    #     locked_file, oracle_file, csv_file = filenames(args, f)
-
-    #     print("\nRunning SAT attack %i/%i (%.0f%%) " % (i + 1, len(files), i / len(files)), end="")
-    #     progress_bar(i + 1, len(files))
-
-    #     p = mp.Process(target=run, args=(locked_file, oracle_file, csv_file,))
-    #     p.start()
-
-    #     start = time.time()
-    #     while p.is_alive():
-    #         if time.time() - start > args.timeout:
-    #             p.kill()
-    #             to_retry.append(f)
-    #             print("\nTERMINATED")
-    #             break
-
-    #     p.join()
-
-    # for i, f in enumerate(to_retry):
-    #     locked_file, oracle_file, csv_file = filenames(args, f)
-
-    #     print("\nRunning SAT attack %i/%i (%.0f%%) " % (i + 1, len(to_retry), i / len(to_retry)), end="")
-    #     progress_bar(i + 1, len(to_retry))
-
-    #     p = mp.Process(target=run, args=(locked_file, oracle_file, csv_file,))
-    #     p.start()
-    #     p.join()
