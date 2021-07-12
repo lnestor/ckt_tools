@@ -78,7 +78,6 @@ if __name__ == "__main__":
     files.sort(key=lambda x: int(re.search("\d+", x).group()))
 
     p_args = [ProcessArgs(args, f, i, len(files)) for i, f in enumerate(files)]
-    p_args = p_args[0:12]
 
     processes = queue.Queue()
     for i in range(args.processes):
