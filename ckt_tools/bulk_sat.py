@@ -21,8 +21,7 @@ def filenames(args, f):
 
     return locked_file, oracle_file, csv_file
 
-
-def run(i, f, files, args):
+def run(locked_file, oracle_file, csv_file):
     sat_attack.run(locked_file, oracle_file, csv_file=csv_file)
 
 if __name__ == "__main__":
@@ -60,7 +59,7 @@ if __name__ == "__main__":
     for i, f in enumerate(to_retry):
         locked_file, oracle_file, csv_file = filenames(args, f)
 
-        print("\nRunning SAT attack %i/%i (%.0f%%) " % (i + 1, len(to_retry), i / len(to_retry)), end="")
+        print("\nRunning SAT attack %i/%i (%.0f%%) " % (i + 1, len(to_retry), 100 * float(i) / len(to_retry)), end="")
         progress_bar(i + 1, len(to_retry))
 
         p = mp.Process(target=run, args=(locked_file, oracle_file, csv_file,))

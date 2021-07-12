@@ -7,10 +7,3 @@ class Logger:
 
     def log(self, text, end="\n"):
         print("(%s) %s" % (self.filename, text), end=end)
-
-    def log_raw(self, text, end="\n"):
-        print(text, end="\n")
-
-    def newline(self):
-        print()
-

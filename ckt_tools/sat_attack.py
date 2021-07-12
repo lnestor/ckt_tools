@@ -1,5 +1,7 @@
 import argparse
 from pyverilog.vparser.parser import parse
+from pyverilog.vparser.parser import VerilogCodeParser
+import random
 import time
 import z3
 
@@ -24,13 +26,10 @@ def attack(locked_graph, oracle_graph, logger):
         key_constraints.append((dip, oracle_output))
 
         iterations += 1
-        logger.log("DIPs found: %i" % (iterations), end="\r")
+        logger.log("DIPs found: %i" % (iterations))
 
-    logger.newline()
-
-    logger.log("Finding final key. ", end="")
+    logger.log("Finding final key. ")
     key = find_key(key_constraints, locked_graph)
-    logger.log_raw("Done.")
 
     key_string = key_str(key)
     logger.log("Key found: %s" % (key_string))
@@ -80,16 +79,23 @@ def key_str(key):
 
     return key_string
 
+def my_parse(filelist, debug=True):
+    preprocess_output = "preprocess_%x.output" % (random.randint(0, 16777215))
+    codeparser = VerilogCodeParser(filelist, preprocess_output=preprocess_output, debug=debug)
+    ast = codeparser.parse()
+    directives = codeparser.get_directives()
+
+    return ast, directives
+
 def run(locked_file, oracle_file, csv_file=None):
     logger = Logger(locked_file)
 
-    logger.log("Reading in circuits. ", end="")
-    locked_ast, _ = parse([locked_file], debug=False)
-    oracle_ast, _ = parse([oracle_file], debug=False)
+    logger.log("Reading in circuits. ")
+    locked_ast, _ = my_parse([locked_file], debug=False)
+    oracle_ast, _ = my_parse([oracle_file], debug=False)
 
     locked_graph = parse_ast(locked_ast)
     oracle_graph = parse_ast(oracle_ast)
-    logger.log_raw("Done.")
 
     start = time.time()
     iterations, match = attack(locked_graph, oracle_graph, logger)
@@ -108,7 +114,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     run(args.locked_file, args.oracle, csv_file=args.csv)
-
-
-
 
