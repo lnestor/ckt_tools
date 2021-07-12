@@ -22,7 +22,11 @@ def filenames(args, f):
     return locked_file, oracle_file, csv_file
 
 def run(locked_file, oracle_file, csv_file):
-    sat_attack.run(locked_file, oracle_file, csv_file=csv_file)
+    runtime, iterations, match = sat_attack.run(locked_file, oracle_file)
+
+    if csv_file is not None:
+        with open(csv_file, "a") as f:
+            f.write("%s,%f,%i,%i\n" % (locked_file, runtime, iterations, match))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run SAT attacks against all benchmarks in a directory")

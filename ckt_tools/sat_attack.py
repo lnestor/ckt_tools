@@ -87,7 +87,7 @@ def my_parse(filelist, debug=True):
 
     return ast, directives
 
-def run(locked_file, oracle_file, csv_file=None):
+def run(locked_file, oracle_file):
     logger = Logger(locked_file)
 
     logger.log("Reading in circuits. ")
@@ -101,9 +101,7 @@ def run(locked_file, oracle_file, csv_file=None):
     iterations, match = attack(locked_graph, oracle_graph, logger)
     end = time.time()
 
-    if csv_file is not None:
-        with open(csv_file, "a") as f:
-            f.write("%s,%f,%i,%i\n" % (locked_file, end - start, iterations, match))
+    return end - start, iterations, match
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a SAT attack.")
@@ -113,5 +111,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    run(args.locked_file, args.oracle, csv_file=args.csv)
+    runtime, iterations, match = run(args.locked_file, args.oracle)
+
+    if args.csv is not None:
+        with open(args.csv, "a") as f:
+            f.write("%s,%f,%i,%i\n" % (locked_file, runtime, iterations, match))
 

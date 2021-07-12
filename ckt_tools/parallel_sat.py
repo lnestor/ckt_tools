@@ -9,17 +9,18 @@ import time
 import sat_attack
 
 class ProcessArgs:
-    def __init__(self, args, f, index, total):
+    def __init__(self, args, f, index, total, lock):
         self.locked_file = os.path.join(args.locked_dir, f)
         self.oracle_file = os.path.join(args.oracle_dir, f)
         self.csv_file = os.path.join(args.locked_dir, "metrics/sat.csv") if args.csv else None
         self.i = index
         self.timeout = args.timeout
         self.total = total
+        self.lock = lock
 
 class SATProcess:
     def __init__(self, args):
-        self.process = mp.Process(target=run, args=(args.locked_file, args.oracle_file, args.csv_file,))
+        self.process = mp.Process(target=run, args=(args.locked_file, args.oracle_file, args.csv_file, args.lock,))
         self.args = args
         self.basename = os.path.splitext(os.path.basename(self.args.locked_file))[0]
 
@@ -61,8 +62,14 @@ def filenames(args, f):
 
     return locked_file, oracle_file, csv_file
 
-def run(locked_file, oracle_file, csv_file):
-    sat_attack.run(locked_file, oracle_file, csv_file=csv_file)
+def run(locked_file, oracle_file, csv_file, lock):
+    runtime, iterations, match = sat_attack.run(locked_file, oracle_file)
+
+    if csv_file is not None:
+        lock.acquire()
+        with open(csv_file, "a") as f:
+            f.write("%s,%f,%i,%i\n" % (locked_file, runtime, iterations, match))
+        lock.release()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run SAT attacks against all benchmarks in a directory")
@@ -77,7 +84,8 @@ if __name__ == "__main__":
     files = [f for f in os.listdir(args.locked_dir) if f.endswith(".v")]
     files.sort(key=lambda x: int(re.search("\d+", x).group()))
 
-    p_args = [ProcessArgs(args, f, i, len(files)) for i, f in enumerate(files)]
+    lock = mp.Lock()
+    p_args = [ProcessArgs(args, f, i, len(files), lock) for i, f in enumerate(files)]
 
     processes = queue.Queue()
     for i in range(args.processes):
