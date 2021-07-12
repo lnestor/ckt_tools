@@ -101,6 +101,7 @@ if __name__ == "__main__":
         p = processes.get()
 
         if p.timed_out():
+            # Do we want to handle these?
             p.kill()
             p.join()
 
