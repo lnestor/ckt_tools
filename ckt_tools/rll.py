@@ -75,6 +75,12 @@ def add_key_nodes(base, index, moddef, key_bit):
     wires.append(vast.Wire(key_gate_wire_name(index)))
     wire_decl.list = tuple(wires)
 
+    portlist = moddef.children()[1]
+    ports = list(portlist.ports)
+    port = vast.Port(key_input_name(index), None, None, None)
+    ports.append(port)
+    portlist.ports = tuple(ports)
+
     if has_not:
         add_not_node(moddef, output_name, index)
 
@@ -94,6 +100,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert a verilog circuit into a CNF formula and measure metrics on that formula")
     parser.add_argument("verilog_file", help="The circuit's verilog file")
     parser.add_argument("--key_length", default=32, type=int, help="The length of the key to add")
+    parser.add_argument("-o", "--output", help="The file to output to. Otherwise it prints to the screen.")
 
     args = parser.parse_args()
 
@@ -112,4 +119,9 @@ if __name__ == "__main__":
 
     codegen = ASTCodeGenerator()
     rslt = codegen.visit(ast)
-    print(rslt)
+
+    if args.output:
+        with open(args.output, "w") as f:
+            f.write(rslt)
+    else:
+        print(rslt)
