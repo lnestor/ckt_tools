@@ -37,7 +37,7 @@ class SATProcess:
 
     def kill(self):
         print("(%s) TERMINATED" % (self.basename))
-        self.process.kill()
+        self.process.terminate()
 
     def join(self):
         self.process.join()
