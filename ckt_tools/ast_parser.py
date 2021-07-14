@@ -175,7 +175,7 @@ class ASTParser():
         elif isinstance(arg.children()[0], vast.Pointer):
             return str(arg.children()[0].var) + "_" + str(arg.children()[0].ptr)
         elif isinstance(arg.children()[0], vast.IntConst):
-            return int(str(arg.children()[0])[0])
+            return int(arg.children()[0].value[-1])
         else:
             import pdb; pdb.set_trace()
 
