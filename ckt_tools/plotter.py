@@ -10,6 +10,20 @@ from plotting import *
 # from datetime import datetime
 # from scipy import stats
 
+def get_filter_percentage_f(cnf, o_cnf, index, percentage):
+    """ Returns an anonymous function to filter an iterable such that they all
+        have a specified decrease in the size of their CNF formula.
+
+    """
+    return lambda x: cnf[x[0]][index] / o_cnf[x[0]][index] < percentage
+
+def max_inf_times(sat, value):
+    """ Sets all infinite SAT attack times to a specified value so they can be
+        plotted.
+
+    """
+    return {k: sat[k][0] if sat[k][0] < value else value for k in sat}
+
 def read_csv_with_labels(filename):
     labels = np.genfromtxt(filename, usecols=0, dtype=str, delimiter=",")
     labels[1:] = [os.path.basename(name) for name in labels[1:]]
@@ -77,32 +91,12 @@ if __name__ == "__main__":
         a_cnfs = [read_csv_with_labels("%s/metrics/cnf.csv" % (s)) for s in args.append]
         a_sats = [read_csv_with_labels("%s/metrics/sat.csv" % (s)) for s in args.append]
 
+    f = get_filter_percentage_f(cnf, o_cnf, 0, 0.55)
+
+    cnf = dict(filter(f, cnf.items()))
+    o_cnf = dict(filter(f, o_cnf.items()))
+    pc1 = dict(filter(f, pc1.items()))
+    o_pc1 = dict(filter(f, o_pc1.items()))
+
     ### Plot below here ###
-    # import pdb; pdb.set_trace()
-    # obf_change.plot_obf_change(o_pc1, pc1, o_cnf, cnf, 0)
-    # o_pc1 = dict(filter(lambda k: o_pc1[k[0]] > 5, o_pc1.items()))
-    # import pdb; pdb.set_trace()
-    # o_pc1 = dict(random.sample(list(o_pc1.items()), 16))
-
-    inf_times = list(filter(lambda k: sat[k][0] > 8000, sat))
-    for name in inf_times:
-        sat[name][0] = 8000
-
-    # sat_attack_times.plot_sat_times_3D(sat, o_pc1, o_pc2)
-    # sat_attack_times.plot_2D(sat, o_pc1)
-    sat_attack_times.plot_diff(sat, a_sats[0], pc1, a_pc1s[0])
-
-    ###
-    # Function to copy values from one dict to another
-    # pc1 = {k: pc1[k] for k in o_pc1}
-    # a_pc1s[0] = {k: a_pc1s[0][k] for k in o_pc1}
-    # a_pc1s[1] = {k: a_pc1s[1][k] for k in o_pc1}
-
-    # o_cnf = {k: o_cnf[k] for k in o_pc1}
-    # cnf = {k: cnf[k] for k in o_pc1}
-    # a_cnfs[0] = {k: a_cnfs[0][k] for k in o_pc1}
-    # a_cnfs[1] = {k: a_cnfs[1][k] for k in o_pc1}
-    # # import pdb; pdb.set_trace()
-    # obf_change.plot_multi_obf_change([o_pc1, pc1, a_pc1s[0], a_pc1s[1]], [o_cnf, cnf, a_cnfs[0], a_cnfs[1]], 0, ["Original", "RLL16", "RLL32", "RLL64"])
-
-    # import pdb; pdb.set_trace()
+    obf_change.plot_obf_change(o_pc1, pc1, o_cnf, cnf, 0)
