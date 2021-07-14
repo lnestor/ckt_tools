@@ -84,7 +84,6 @@ if __name__ == "__main__":
     # import pdb; pdb.set_trace()
     # o_pc1 = dict(random.sample(list(o_pc1.items()), 16))
 
-    # import pdb; pdb.set_trace()
     inf_times = list(filter(lambda k: sat[k][0] > 8000, sat))
     for name in inf_times:
         sat[name][0] = 8000
@@ -107,57 +106,3 @@ if __name__ == "__main__":
     # obf_change.plot_multi_obf_change([o_pc1, pc1, a_pc1s[0], a_pc1s[1]], [o_cnf, cnf, a_cnfs[0], a_cnfs[1]], 0, ["Original", "RLL16", "RLL32", "RLL64"])
 
     # import pdb; pdb.set_trace()
-
-# if __name__ == "__main__":
-#     parser = argparse.ArgumentParser(description="Create a scatter plot of CNF formula vs circuit metric")
-#     parser.add_argument("structural_file", help="A CSV file with structure metrics")
-#     parser.add_argument("cnf_file", help="A CSV file with CNF metrics")
-#     parser.add_argument("--show", action="store_true", help="Display the figure instead of saving it")
-#     args = parser.parse_args()
-
-#     struct, cnf = read_csv(args)
-
-#     print_selections(struct)
-#     struct_sel_index = int(input("Enter number of structural metric to plot: ")) - 1
-#     struct_sel = struct[struct.dtype.names[struct_sel_index]]
-
-#     print_selections(cnf)
-#     cnf_sel_index = int(input("Enter number of CNF metric to plot: ")) - 1
-#     cnf_sel = cnf[cnf.dtype.names[cnf_sel_index]]
-
-#     bin_input = input("Enter number of bins to form (or hit enter to not bin): ")
-
-#     if len(bin_input) == 0:
-#         xdata = struct_sel
-#         ydata = cnf_sel
-#         yerror = None
-#     else:
-#         bin_count = int(bin_input)
-#         mean, bin_edges, _ = stats.binned_statistic(struct_sel, cnf_sel, bins=bin_count)
-#         std, _, _ = stats.binned_statistic(struct_sel, cnf_sel, statistic="std", bins=bin_count)
-#         bin_centers = [(l + r) / 2 for l, r in zip(bin_edges, bin_edges[1:])]
-
-#         xdata = bin_centers
-#         ydata = mean
-#         yerror = std
-
-#     fig = plt.figure()
-#     ax = fig.add_subplot(1,1,1)
-
-#     ax.errorbar(xdata, ydata, yerr=yerror, fmt=".")
-
-#     struct_name = struct.dtype.names[struct_sel_index]
-#     ax.set_xlabel(struct_name)
-#     cnf_name = cnf.dtype.names[cnf_sel_index]
-#     ax.set_ylabel(cnf_name)
-#     ax.set_title("%s vs %s" % (cnf_name, struct_name))
-
-#     if args.show:
-#         plt.show()
-#     else:
-#         date_name = datetime.now().strftime("%m_%d_%Y_%H%M%S")
-#         fig_name = input("Enter save name of figure (or leave blank for generic name): ")
-#         if len(fig_name) > 0:
-#             fig_name = fig_name + "_"
-
-#         fig.savefig("figures/%s%s" % (fig_name, date_name), bbox_inches="tight")
