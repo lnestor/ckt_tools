@@ -97,7 +97,7 @@ def add_not_node(moddef, output_name, index):
     wire_decl.list = tuple(wires)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Convert a verilog circuit into a CNF formula and measure metrics on that formula")
+    parser = argparse.ArgumentParser(description="Run random logic locking on a circuit")
     parser.add_argument("verilog_file", help="The circuit's verilog file")
     parser.add_argument("--key_length", default=32, type=int, help="The length of the key to add")
     parser.add_argument("-o", "--output", help="The file to output to. Otherwise it prints to the screen.")
