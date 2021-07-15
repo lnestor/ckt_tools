@@ -221,11 +221,13 @@ class ASTParser():
                 if isinstance(RHS, int):
                     self.nodes[name].type = "buf"
                     self.assigns.remove(name)
-                    return
-
-                # Rename the output and move on
-                self.outputs = [RHS if o == LHS else o for o in self.outputs]
-                self._remove_assigns(RHS, prev_name, visited)
+                elif RHS in self.inputs:
+                    self.nodes[name].type = "buf"
+                    self.assigns.remove(name)
+                else:
+                    # Rename the output and move on
+                    self.outputs = [RHS if o == LHS else o for o in self.outputs]
+                    self._remove_assigns(RHS, prev_name, visited)
             elif prev_name in self.nodes:
                 # We must swap the name of the input. The input name is the LHS, we swap
                 # it to the RHS
