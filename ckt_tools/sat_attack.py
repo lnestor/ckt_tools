@@ -12,7 +12,11 @@ from sat.logger import Logger
 from sat.model import extract
 from z3_builder import Z3Builder
 
-def attack(locked_graph, oracle_graph, logger):
+CIRCUITS_DONT_MATCH = 0
+CIRCUITS_MATCH = 1
+EQUIVALENCE_NOT_CHECKED = 2
+
+def attack(locked_graph, oracle_graph, logger, check_correct=True):
     dip_finder = DipFinder(locked_graph)
     oracle_solver = CircuitSolver(Z3Builder().build(oracle_graph)[0])
 
@@ -34,11 +38,15 @@ def attack(locked_graph, oracle_graph, logger):
     key_string = key_str(key)
     logger.log("Key found: %s" % (key_string))
 
-    match = check_key(key, locked_graph, oracle_graph)
-    if match:
-        logger.log("Circuits match!")
+    if check_correct:
+        logger.log("Checking key correctness.")
+        match = check_key(key, locked_graph, oracle_graph)
+        if match:
+            logger.log("Correct key!")
+        else:
+            logger.log("ERROR: Key does not make circuits equivalent")
     else:
-        logger.log("ERROR: Circuits do not match")
+        match = EQUIVALENCE_NOT_CHECKED
 
     return iterations, match
 
@@ -87,7 +95,7 @@ def my_parse(filelist, debug=True):
 
     return ast, directives
 
-def run(locked_file, oracle_file):
+def run(locked_file, oracle_file, check_correct=True):
     logger = Logger(locked_file)
 
     logger.log("Reading in circuits. ")
@@ -98,7 +106,7 @@ def run(locked_file, oracle_file):
     oracle_graph = parse_ast(oracle_ast)
 
     start = time.time()
-    iterations, match = attack(locked_graph, oracle_graph, logger)
+    iterations, match = attack(locked_graph, oracle_graph, logger, check_correct=check_correct)
     end = time.time()
 
     return end - start, iterations, match
@@ -108,10 +116,11 @@ if __name__ == "__main__":
     parser.add_argument("locked_file", help="The locked verilog file.")
     parser.add_argument("oracle", help="The unlocked verilog file.")
     parser.add_argument("--csv", help="A CSV file to log metrics to.")
+    parser.add_argument("-cc", "--check_correctness", action="store_true", help="Check for final key correctness. This can cause issues when timing the SAT attack because it takes a different amount of time for different circuits.")
 
     args = parser.parse_args()
 
-    runtime, iterations, match = run(args.locked_file, args.oracle)
+    runtime, iterations, match = run(args.locked_file, args.oracle, check_correct=args.check_correctness)
 
     if args.csv is not None:
         with open(args.csv, "a") as f:

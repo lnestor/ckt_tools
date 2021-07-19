@@ -63,7 +63,7 @@ def filenames(args, f):
     return locked_file, oracle_file, csv_file
 
 def run(locked_file, oracle_file, csv_file, lock):
-    runtime, iterations, match = sat_attack.run(locked_file, oracle_file)
+    runtime, iterations, match = sat_attack.run(locked_file, oracle_file, check_correct=False)
 
     if csv_file is not None:
         lock.acquire()
