@@ -1,3 +1,4 @@
+Name,Time,Iterations,Match
 benchmarks/generated/rll32/Stat_100_42.v,1.006968,5,1
 benchmarks/generated/rll32/Stat_100_41.v,1.317310,8,1
 benchmarks/generated/rll32/Stat_100_410.v,1.369346,8,1
