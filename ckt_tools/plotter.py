@@ -17,12 +17,21 @@ def get_filter_percentage_f(cnf, o_cnf, index, percentage):
     """
     return lambda x: cnf[x[0]][index] / o_cnf[x[0]][index] < percentage
 
+def get_sat_filter_percentage_f(sat, o_sat, percentage):
+    return lambda x: sat[x[0]] / o_sat[x[0]] < percentage
+
 def max_inf_times(sat, value):
     """ Sets all infinite SAT attack times to a specified value so they can be
         plotted.
 
     """
     return {k: sat[k][0] if sat[k][0] < value else value for k in sat}
+
+def max_missing_times(sat, other, value):
+    return {k: sat[k][0] if k in sat else value for k in other}
+
+def get_missing_keys(missing_from, compare):
+    return list(set(compare) - set(missing_from))
 
 def read_csv_with_labels(filename):
     labels = np.genfromtxt(filename, usecols=0, dtype=str, delimiter=",")
@@ -91,12 +100,23 @@ if __name__ == "__main__":
         a_cnfs = [read_csv_with_labels("%s/metrics/cnf.csv" % (s)) for s in args.append]
         a_sats = [read_csv_with_labels("%s/metrics/sat.csv" % (s)) for s in args.append]
 
-    f = get_filter_percentage_f(cnf, o_cnf, 0, 0.55)
-
-    cnf = dict(filter(f, cnf.items()))
-    o_cnf = dict(filter(f, o_cnf.items()))
-    pc1 = dict(filter(f, pc1.items()))
-    o_pc1 = dict(filter(f, o_pc1.items()))
-
     ### Plot below here ###
-    obf_change.plot_obf_change(o_pc1, pc1, o_cnf, cnf, 0)
+    # obf_change.plot_obf_change(o_pc1, pc1, o_cnf, cnf, 1)
+    # obf_change.plot_obf_change(a_pc1s[0], pc1, a_cnfs[0], cnf, 1)
+    # keys = get_missing_keys(sat, a_sats[0])
+    # import pdb; pdb.set_trace()
+    # obf_change.plot_obf_change(pc1, a_pc1s[0], cnf, a_cnfs[0], 0)
+    sat = max_missing_times(sat, pc1, 8000)
+    a_sats[0] = max_missing_times(a_sats[0], pc1, 8000)
+
+    f = get_sat_filter_percentage_f(a_sats[0], sat, .5)
+    pc1_filtered = dict(filter(f, pc1.items()))
+    cnf_filtered = dict(filter(f, cnf.items()))
+    a_pc1_filtered = dict(filter(f, a_pc1s[0].items()))
+    a_cnf_filtered = dict(filter(f, a_cnfs[0].items()))
+
+    sat_f = dict(filter(f, sat.items()))
+    a_sat_f = dict(filter(f, a_sats[0].items()))
+    obf_change.plot_obf_change(pc1_filtered, a_pc1_filtered, cnf_filtered, a_cnf_filtered, 0)
+    # sat_attack_times.plot_diff(sat_f, a_sat_f, pc1_filtered, a_pc1_filtered)
+    # sat_attack_times.plot_2D_max(sat, pc1, 8000)
