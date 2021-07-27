@@ -6,6 +6,7 @@ import time
 import z3
 
 from ast_parser import parse_ast
+from ckt_equivalence import check_eq_with_key
 from sat.circuit_solver import CircuitSolver
 from sat.dip_finder import DipFinder
 from sat.logger import Logger
@@ -40,7 +41,7 @@ def attack(locked_graph, oracle_graph, logger, check_correct=True):
 
     if check_correct:
         logger.log("Checking key correctness.")
-        match = check_key(key, locked_graph, oracle_graph)
+        match = check_eq_with_key(key, locked_graph, oracle_graph)
         if match:
             logger.log("Correct key!")
         else:

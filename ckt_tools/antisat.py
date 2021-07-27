@@ -4,6 +4,9 @@ import pyverilog.vparser.ast as vast
 from pyverilog.vparser.parser import parse
 import random
 
+from ast_parser import parse_ast
+from ckt_equivalence import check_eq_with_key
+
 def get_decl_names(moddef, cls):
     decl = [n for n in moddef.children() if len(n.children()) > 0 and isinstance(n.children()[0], cls)]
 
@@ -137,11 +140,28 @@ def insert_antisat(moddef, Y, G):
 
     moddef.items = tuple(items)
 
+def get_key(key_inputs):
+    """Gets the key value for the Anti-SAT circuit.
+
+    Currently, since we only use XOR gates when combining the inputs with
+    the key bits, all that matters is that the corresponding bits to
+    g and gbar are equal. Therefore, we just choose a random value to assign.
+
+    """
+    key = {}
+
+    for i in range(int(len(key_inputs) / 2)):
+        value = random.choice([True, False])
+        key[key_inputs[i].name] = value
+        key[key_inputs[i + int(len(key_inputs) / 2)].name] = value
+
+    return key
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Add an Anti-SAT block to a circuit.")
     parser.add_argument("verilog_file", help="The circuit's verilog file.")
-    # parser.add_argument("--key_length", type=even, default=32, help="The number of key bits to use. This must be an even number.")
     parser.add_argument("-o", "--output", help="The verilog file to output to. Otherwise it will print to the screen.")
+    parser.add_argument("-ce", "--check_equivalence", action="store_true", help="Check that the locked circuit has equivalent logic to the unlocked circuit.")
 
     args = parser.parse_args()
 
@@ -160,6 +180,16 @@ if __name__ == "__main__":
     G = create_antisat_block(moddef, g_gates, gbar_gates)
     insert_antisat(moddef, Y, G)
 
+    if args.check_equivalence:
+        expected_key = get_key(key_inputs)
+        locked_graph = parse_ast(ast)
+
+        unlocked_ast, _ = parse([args.verilog_file], debug=False)
+        unlocked_graph = parse_ast(unlocked_ast)
+
+        match = check_eq_with_key(expected_key, locked_graph, unlocked_graph)
+        import pdb; pdb.set_trace()
+
     codegen = ASTCodeGenerator()
     rslt = codegen.visit(ast)
 
@@ -168,10 +198,3 @@ if __name__ == "__main__":
             f.write(rslt)
     else:
         print(rslt)
-
-def even(value):
-    ivalue = int(value)
-    if ivalue % 2 != 0:
-        raise argparse.ArgumentTypeError("%s is not an even number" % (value))
-    return ivalue
-
