@@ -49,3 +49,15 @@ def plot_diff(sat1, sat2, pc1_1, pc1_2):
     plt.legend()
 
     plt.show()
+
+def plot_decrease(sat, pc1):
+    x = [pc1[k] for k in sat]
+    y = [sat[k] for k in sat]
+
+    plt.scatter(x, y)
+
+    plt.xlabel("Absolute Decrease in PC1")
+    plt.ylabel("Percentage Decrease in SAT Solving Times")
+    plt.title("Decrease in SAT Solving Time for RLL16 when Optimized")
+
+    plt.show()

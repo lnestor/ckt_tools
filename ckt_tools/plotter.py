@@ -7,31 +7,47 @@ from sklearn.preprocessing import StandardScaler
 
 from plotting import *
 
-# from datetime import datetime
-# from scipy import stats
+def key_missing_warning(original, new):
+    _, original_only, new_only = key_venn(original, new)
 
-def get_filter_percentage_f(cnf, o_cnf, index, percentage):
-    """ Returns an anonymous function to filter an iterable such that they all
-        have a specified decrease in the size of their CNF formula.
+    if len(new_only) > 0:
+        print("WARNING: Missing from original:")
+        for k in new_only:
+            print(k)
 
-    """
-    return lambda x: cnf[x[0]][index] / o_cnf[x[0]][index] < percentage
+    if len(original_only) > 0:
+        print("WARNING: Missing from new:")
+        for k in original_only:
+            print(k)
 
-def get_sat_filter_percentage_f(sat, o_sat, percentage):
-    return lambda x: sat[x[0]] / o_sat[x[0]] < percentage
 
-def max_inf_times(sat, value):
-    """ Sets all infinite SAT attack times to a specified value so they can be
-        plotted.
+def percent_decrease(original, new):
+    shared, _, _ = key_venn(original, new)
+    key_missing_warning(original, new)
+    decrease = {k: (original[k] - new[k]) / original[k] for k in shared}
+    return decrease
 
-    """
-    return {k: sat[k][0] if sat[k][0] < value else value for k in sat}
+def abs_decrease(original, new):
+    shared, _, _ = key_venn(original, new)
+    # key_missing_warning(original, new)
+    decrease = {k: original[k] - new[k] for k in shared}
+    return decrease
+
+def key_venn(dict1, dict2):
+    dict1_only = list(set(dict1) - set(dict2))
+    dict2_only = list(set(dict2) - set(dict1))
+    shared = set(dict1).intersection(set(dict2))
+
+    return shared, dict1_only, dict2_only
+
+def key_diff(dict1, dict2):
+    missing_from_dict1 = list(set(dict2) - set(dict1))
+    missing_from_dict2 = list(set(dict1) - set(dict2))
+
+    return missing_from_dict1, missing_from_dict2
 
 def max_missing_times(sat, other, value):
     return {k: sat[k][0] if k in sat else value for k in other}
-
-def get_missing_keys(missing_from, compare):
-    return list(set(compare) - set(missing_from))
 
 def read_csv_with_labels(filename):
     labels = np.genfromtxt(filename, usecols=0, dtype=str, delimiter=",")
@@ -90,7 +106,8 @@ if __name__ == "__main__":
 
     sat_filename = "%s/sat.csv" % (metrics_dir)
     if os.path.isfile(sat_filename):
-        sat = read_csv_with_labels(sat_filename)
+        sat_all = read_csv_with_labels(sat_filename)
+        sat = {k: v[0] for k, v in sat_all.items()}
 
     # Note: This assumes that all appended directories have struct and CNF metrics
     if args.append is not None:
@@ -98,25 +115,31 @@ if __name__ == "__main__":
         a_pcs = [apply_pca_transform(s, scaler, pca) for s in a_structs]
         a_pc1s = [{k: v[0] for k, v in pc.items()} for pc in a_pcs]
         a_cnfs = [read_csv_with_labels("%s/metrics/cnf.csv" % (s)) for s in args.append]
-        a_sats = [read_csv_with_labels("%s/metrics/sat.csv" % (s)) for s in args.append]
+        a_sats_all = [read_csv_with_labels("%s/metrics/sat.csv" % (s)) for s in args.append]
+        a_sats = [{k: v[0] for k, v in s.items()} for s in a_sats_all]
+
+    ### Processing below here ###
+    sat_decrease = percent_decrease(sat, a_sats[0])
+    pc1_decrease = abs_decrease(pc1, a_pc1s[0])
+
+    points = sorted(sat_decrease.items(), key=lambda x: x[1])
+    labels = [p[0] for p in points]
+
+    # increase = ["Stat_4000_402.v"]
+    increase = []
+    increase.extend(labels[0:9])
+    import pdb; pdb.set_trace()
+
+    original_cnf = [sat_all[l] for l in increase]
+    rerun_cnf = [a_sats_all[0][l] for l in increase]
+    to_print = list(zip(original_cnf, rerun_cnf))
+    for pair in to_print:
+        print(",".join(map(str, pair[0])))
+        print(",".join(map(str, pair[1])))
+
+    # import pdb; pdb.set_trace()
+
 
     ### Plot below here ###
-    # obf_change.plot_obf_change(o_pc1, pc1, o_cnf, cnf, 1)
-    # obf_change.plot_obf_change(a_pc1s[0], pc1, a_cnfs[0], cnf, 1)
-    # keys = get_missing_keys(sat, a_sats[0])
-    # import pdb; pdb.set_trace()
-    # obf_change.plot_obf_change(pc1, a_pc1s[0], cnf, a_cnfs[0], 0)
-    sat = max_missing_times(sat, pc1, 8000)
-    a_sats[0] = max_missing_times(a_sats[0], pc1, 8000)
-
-    f = get_sat_filter_percentage_f(a_sats[0], sat, .5)
-    pc1_filtered = dict(filter(f, pc1.items()))
-    cnf_filtered = dict(filter(f, cnf.items()))
-    a_pc1_filtered = dict(filter(f, a_pc1s[0].items()))
-    a_cnf_filtered = dict(filter(f, a_cnfs[0].items()))
-
-    sat_f = dict(filter(f, sat.items()))
-    a_sat_f = dict(filter(f, a_sats[0].items()))
-    obf_change.plot_obf_change(pc1_filtered, a_pc1_filtered, cnf_filtered, a_cnf_filtered, 0)
-    # sat_attack_times.plot_diff(sat_f, a_sat_f, pc1_filtered, a_pc1_filtered)
-    # sat_attack_times.plot_2D_max(sat, pc1, 8000)
+    # categorical.scatter_with_labels(sat_decrease, to_plot="all")
+    # sat_attack_times.plot_decrease(sat_decrease, pc1_decrease)
