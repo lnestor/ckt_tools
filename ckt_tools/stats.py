@@ -39,4 +39,4 @@ if __name__ == "__main__":
         with open(csv_path, "w") as f:
             f.write("Name,Mean Time,Stdev Time,Iterations\n")
             for label in means:
-                f.write("%s,%f,%f,%i\n" % (label, means[label], stdevs[label], sats[0][label][2]))
+                f.write("%s,%f,%f,%i\n" % (label, means[label], stdevs[label], sats[0][label][1]))
