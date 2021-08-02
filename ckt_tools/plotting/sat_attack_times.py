@@ -61,3 +61,13 @@ def plot_decrease(sat, pc1):
     plt.title("Decrease in SAT Solving Time for RLL16 when Optimized")
 
     plt.show()
+
+def plot_iterations(prob, sat):
+    x = [prob[k] for k in sat]
+    y = [sat[k][0] for k in sat]
+
+    plt.scatter(x, y, s=12)
+    plt.xlabel("Maximum Probability Difference")
+    plt.ylabel("SAT Timing")
+
+    plt.show()

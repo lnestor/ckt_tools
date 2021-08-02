@@ -1,11 +1,15 @@
 import argparse
+import json
 import numpy as np
 import os
 import random
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
+from dir_metrics import DirectoryMetrics
 from plotting import *
+
+ORIGINAL_DIR = "benchmarks/generated/original"
 
 def key_missing_warning(original, new):
     _, original_only, new_only = key_venn(original, new)
@@ -20,6 +24,24 @@ def key_missing_warning(original, new):
         for k in original_only:
             print(k)
 
+def percent_diff(data1, data2, error1=None, error2=None):
+    shared, _, _ = key_venn(data1, data2)
+    key_missing_warning(data1, data2)
+    diff = {k: 2 * (data1[k] - data2[k]) / (data1[k] + data2[k]) for k in shared}
+
+    diff = {}
+    error = {}
+    for k in shared:
+        A = 2 * (data1[k] - data2[k])
+        B = data1[k] + data2[k]
+        diff[k] = A / B
+
+        if error1 is not None:
+            dA = 2 * (error1[k] + error2[k])
+            dB = error1[k] + error2[k]
+            error[k] = abs(diff[k]) * (dA / abs(A) + dB / abs(B))
+
+    return diff, error
 
 def percent_decrease(original, new):
     shared, _, _ = key_venn(original, new)
@@ -49,19 +71,8 @@ def key_diff(dict1, dict2):
 def max_missing_times(sat, other, value):
     return {k: sat[k][0] if k in sat else value for k in other}
 
-def read_csv_with_labels(filename):
-    labels = np.genfromtxt(filename, usecols=0, dtype=str, delimiter=",")
-    labels[1:] = [os.path.basename(name) for name in labels[1:]]
-    data = np.genfromtxt(filename, delimiter=",", names=True)
-    return {label: list(row)[1:] for label, row in zip(labels[1:], data)}
-
-def apply_pca_transform(data, scaler, pca):
-    scaled_data = scaler.transform(list(data.values()))
-    scaled = {k: v for k, v in zip(list(data.keys()), scaled_data)}
-
-    pc_data = pca.transform(list(scaled.values()))
-    pcs = {k: v for k, v in zip(list(data.keys()), pc_data)}
-    return pcs
+def filter_by_list(d, l):
+    return {label: d[label] for label in l}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generic plotting tool. Modify this to create the specific plot you want.")
@@ -69,77 +80,53 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--append", action="append", help="Additional directories to consider")
     args = parser.parse_args()
 
-    metrics_dir = "%s/metrics" % (args.directory)
-    if not os.path.isdir(metrics_dir):
-        print("Metrics directory not present")
-        exit(-1)
+    o_metrics = DirectoryMetrics(ORIGINAL_DIR)
+    o_metrics.calc_pcs()
+    metrics = DirectoryMetrics(args.directory)
+    metrics.calc_pcs(scaler=o_metrics.scaler, pca=o_metrics.pca)
 
-    o_struct_filename = "benchmarks/generated/original/metrics/struct.csv"
-    if os.path.isfile(o_struct_filename):
-        o_struct = read_csv_with_labels(o_struct_filename)
-
-        scaler = StandardScaler()
-        scaled_data = scaler.fit_transform(list(o_struct.values()))
-        o_scaled = {k: v for k, v in zip(list(o_struct.keys()), scaled_data)}
-
-        pca = PCA()
-        pc_data = pca.fit_transform(list(o_scaled.values()))
-        o_pcs = {k: v for k, v in zip(list(o_struct.keys()), pc_data)}
-        o_pc1 = {k: v[0] for k, v in zip(list(o_struct.keys()), pc_data)}
-        o_pc2 = {k: v[1] for k, v in zip(list(o_struct.keys()), pc_data)}
-
-    o_cnf_filename = "benchmarks/generated/original/metrics/cnf.csv"
-    if os.path.isfile(o_cnf_filename):
-        o_cnf = read_csv_with_labels(o_cnf_filename)
-
-    struct_filename = "%s/struct.csv" % (metrics_dir)
-    if os.path.isfile(struct_filename):
-        struct = read_csv_with_labels(struct_filename)
-
-        pcs = apply_pca_transform(struct, scaler, pca)
-        pc1 = {k: v[0] for k, v in pcs.items()}
-        pc2 = {k: v[1] for k, v in pcs.items()}
-
-    cnf_filename = "%s/cnf.csv" % (metrics_dir)
-    if os.path.isfile(cnf_filename):
-        cnf = read_csv_with_labels(cnf_filename)
-
-    sat_filename = "%s/sat.csv" % (metrics_dir)
-    if os.path.isfile(sat_filename):
-        sat_all = read_csv_with_labels(sat_filename)
-        sat = {k: v[0] for k, v in sat_all.items()}
-
-    # Note: This assumes that all appended directories have struct and CNF metrics
     if args.append is not None:
-        a_structs = [read_csv_with_labels("%s/metrics/struct.csv" % (s)) for s in args.append]
-        a_pcs = [apply_pca_transform(s, scaler, pca) for s in a_structs]
-        a_pc1s = [{k: v[0] for k, v in pc.items()} for pc in a_pcs]
-        a_cnfs = [read_csv_with_labels("%s/metrics/cnf.csv" % (s)) for s in args.append]
-        a_sats_all = [read_csv_with_labels("%s/metrics/sat.csv" % (s)) for s in args.append]
-        a_sats = [{k: v[0] for k, v in s.items()} for s in a_sats_all]
+        a_metrics = [DirectoryMetrics(s) for s in args.append]
+
+        for i in range(len(a_metrics)):
+            a_metrics[i].calc_pcs(scaler=o_metrics.scaler, pca=o_metrics.pca)
 
     ### Processing below here ###
-    sat_decrease = percent_decrease(sat, a_sats[0])
-    pc1_decrease = abs_decrease(pc1, a_pc1s[0])
+    diff, unc = percent_diff(sat_mean, a_sats_mean[0], sat_unc, a_sats_unc[0])
+    shared, first_only, rerun_only = key_venn(sat_mean, a_sats_mean[0])
+    sorted_labels = list(sorted(diff, key=lambda x: diff[x]))
 
-    points = sorted(sat_decrease.items(), key=lambda x: x[1])
-    labels = [p[0] for p in points]
+    num_to_analyze = 10
 
-    # increase = ["Stat_4000_402.v"]
-    increase = []
-    increase.extend(labels[0:9])
-    import pdb; pdb.set_trace()
+    increase = first_only.copy()
+    increase.extend(sorted_labels[-num_to_analyze + len(increase):][::-1])
 
-    original_cnf = [sat_all[l] for l in increase]
-    rerun_cnf = [a_sats_all[0][l] for l in increase]
-    to_print = list(zip(original_cnf, rerun_cnf))
-    for pair in to_print:
-        print(",".join(map(str, pair[0])))
-        print(",".join(map(str, pair[1])))
+    decrease = rerun_only.copy()
+    decrease.extend(sorted_labels[0:num_to_analyze - len(decrease)])
 
-    # import pdb; pdb.set_trace()
+    def get_metrics(labels):
+        # CNF
+        m_cnf1 = filter_by_list(cnf, labels)
+        m_cnf2 = filter_by_list(a_cnfs[0], labels)
+
+        # SAT
+        m_sat1 = filter_by_list(sat_all, labels[1:])
+        m_sat1[labels[0]] = [float("NaN")] * len(m_sat1[labels[1]])
+        m_sat2 = filter_by_list(a_sats_all[0], labels[1:])
+        m_sat2[labels[0]] = [float("NaN")] * len(m_sat2[labels[1]])
+
+        # PC1
+        m_pc11 = filter_by_list(pc1, labels)
+        m_pc12 = filter_by_list(a_pc1s[0], labels)
+
+        # Miter circuit
+        # Struct
+        # How close are key gates to inputs/outputs?
+        # How much to key gates interfere with each other?
+        # What does fan-in and fan-out look like for each key gate?
+
+    # get_metrics(increase)
+    # get_metrics(decrease)
 
 
     ### Plot below here ###
-    # categorical.scatter_with_labels(sat_decrease, to_plot="all")
-    # sat_attack_times.plot_decrease(sat_decrease, pc1_decrease)

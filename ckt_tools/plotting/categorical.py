@@ -13,5 +13,9 @@ def scatter_with_labels(data, to_plot="all", unc=None):
     plt.scatter(labels, values, s=12)
     plt.errorbar(labels, values, yerr=yerror, fmt="none")
 
+    plt.title("Percent Difference RLL32 Run 1/2")
+    plt.xlabel("Circuit")
+    plt.ylabel("% Difference")
+
     plt.tight_layout()
     plt.show()
