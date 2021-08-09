@@ -9,6 +9,7 @@ from ast_parser import parse_ast
 from ckt_equivalence import check_eq_with_key
 from sat.circuit_solver import CircuitSolver
 from sat.dip_finder import DipFinder
+from sat.key_history import KeyHistory
 from sat.logger import Logger
 from sat.model import extract
 from z3_builder import Z3Builder
@@ -20,6 +21,7 @@ EQUIVALENCE_NOT_CHECKED = 2
 def attack(locked_graph, oracle_graph, logger, check_correct=True):
     dip_finder = DipFinder(locked_graph)
     oracle_solver = CircuitSolver(Z3Builder().build(oracle_graph)[0])
+    history = KeyHistory(locked_graph.key_inputs())
 
     key_constraints = []
     iterations = 0
@@ -30,11 +32,15 @@ def attack(locked_graph, oracle_graph, logger, check_correct=True):
         dip_finder.add_constraint(dip, oracle_output)
         key_constraints.append((dip, oracle_output))
 
+        key_candidate = find_key(key_constraints, locked_graph, completion=False)
+        history.save(key_candidate)
+
         iterations += 1
         logger.log("DIPs found: %i" % (iterations))
 
     logger.log("Finding final key. ")
     key = find_key(key_constraints, locked_graph)
+    history.save(key)
 
     key_string = key_str(key)
     logger.log("Key found: %s" % (key_string))
@@ -51,8 +57,9 @@ def attack(locked_graph, oracle_graph, logger, check_correct=True):
 
     return iterations, match
 
-def find_key(key_constraints, locked_graph):
-    s = z3.Solver()
+def find_key(key_constraints, locked_graph, completion=True):
+    s = z3.SimpleSolver()
+    s.set(auto_config=False, relevancy=2)
     builder = Z3Builder()
 
     for dip, output in key_constraints:
@@ -62,7 +69,8 @@ def find_key(key_constraints, locked_graph):
         s.add(*constraints)
 
     s.check()
-    return extract(s.model(), locked_graph.key_inputs(), completion=True)
+    key = extract(s.model(), locked_graph.key_inputs(), completion=completion)
+    return key
 
 def check_key(key, locked_graph, oracle_graph):
     builder = Z3Builder()
