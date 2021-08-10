@@ -1,5 +1,4 @@
 import z3
-from node_type import NodeType
 
 class Z3Builder():
     """Class to build a z3 representation of a circuit from a CircuitGraph.
@@ -52,9 +51,9 @@ class Z3Builder():
         except:
             import pdb; pdb.set_trace()
 
-        if node.type == NodeType.INPUT:
+        if node.type == "input":
             self._build_input(node, name)
-        elif node.type == NodeType.CONSTANT:
+        elif node.type == "constant":
             self.z3_repr[name] = node.inputs[0] == 1
         else:
             fanin = [self._build_node(nodes, child_name) for child_name in node.inputs]

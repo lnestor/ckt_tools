@@ -19,7 +19,7 @@ def key_gate_type(key_bit, has_not):
 def build_key_node(module, output_name, index, has_not):
     xor_instance_name = "KeyGate_0_%i" % (index)
 
-    output = output_name if not has_not else key_not_wire_name(index) 
+    output = output_name if not has_not else key_not_wire_name(index)
     id1 = vast.Identifier(output)
     port1 = vast.PortArg(None, id1)
     id2 = vast.Identifier(key_input_name(index))

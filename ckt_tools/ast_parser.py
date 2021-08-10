@@ -1,7 +1,6 @@
 import pyverilog.vparser.ast as vast
 
 from node import Node
-from node_type import NodeType
 from circuit_graph import CircuitGraph
 
 def parse_ast(ast, ignore_assigns=False):
@@ -88,10 +87,10 @@ class ASTParser():
         if input.width is not None:
             for i in range(int(input.width.lsb.value), int(input.width.msb.value) + 1):
                 name = base_name + "_" + str(i)
-                self.nodes[name] = Node(name, [], NodeType.INPUT)
+                self.nodes[name] = Node(name, [], "input")
                 self.inputs.append(name)
         else:
-            self.nodes[base_name] = Node(base_name, [], NodeType.INPUT)
+            self.nodes[base_name] = Node(base_name, [], "input")
             self.inputs.append(base_name)
 
     def _parse_output(self, output):
@@ -106,10 +105,10 @@ class ASTParser():
         if output.width is not None:
             for i in range(int(output.width.lsb.value), int(output.width.msb.value) + 1):
                 name = base_name + "_" + str(i)
-                self.nodes[name] = Node(name, [], NodeType.OUTPUT)
+                self.nodes[name] = Node(name, [], "output")
                 self.outputs.append(name)
         else:
-            self.nodes[base_name] = Node(base_name, [], NodeType.OUTPUT)
+            self.nodes[base_name] = Node(base_name, [], "output")
             self.outputs.append(base_name)
 
 
@@ -121,7 +120,7 @@ class ASTParser():
 
         """
         name = wire.name
-        self.nodes[name] = Node(name, [], NodeType.WIRE)
+        self.nodes[name] = Node(name, [], "wire")
 
     def _parse_instance_list(self, ilist):
         """Parses a Verilog instance list.
@@ -142,6 +141,7 @@ class ASTParser():
 
         self.nodes[output].inputs = inputs
         self.nodes[output].type = itype.lower()
+        self.nodes[output].vname = instance.name
 
     def _parse_portargs(self, instance):
         inputs = []

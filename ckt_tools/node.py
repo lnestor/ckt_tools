@@ -9,12 +9,14 @@ class Node:
         output: the name of the output wire
         inputs: the names of the input wires
         type: the type of gate
+        vname: the verilog name of the gate
 
     """
-    def __init__(self, output, inputs, type):
+    def __init__(self, output, inputs, type, vname=""):
         self.output = output
         self.inputs = inputs
         self.type = type
+        self.vname = vname
 
     def __eq__(self, other):
         if isinstance(self, other.__class__):
