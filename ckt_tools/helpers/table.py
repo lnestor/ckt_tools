@@ -19,3 +19,13 @@ def print_in_sections(table, cols_per_print):
 
         print(tabulate(table[:,cols_to_print], headers="firstrow"))
         print("\n")
+
+def table_to_csv(table):
+    csv = ""
+
+    for row in table:
+        csv += ",".join(row)
+        csv += "\n"
+
+    return csv
+

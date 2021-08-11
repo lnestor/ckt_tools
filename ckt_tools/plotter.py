@@ -1,12 +1,9 @@
 import argparse
-import json
-import numpy as np
-import os
-import random
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 
 from dir_metrics import DirectoryMetrics
+from helpers.array import remove_cols
+from helpers.dict import filter_by_list
+from helpers.table import dict_to_table, print_in_sections, table_to_csv
 from plotting import *
 
 ORIGINAL_DIR = "benchmarks/generated/original"
@@ -26,7 +23,7 @@ def key_missing_warning(original, new):
 
 def percent_diff(data1, data2, error1=None, error2=None):
     shared, _, _ = key_venn(data1, data2)
-    key_missing_warning(data1, data2)
+    # key_missing_warning(data1, data2)
     diff = {k: 2 * (data1[k] - data2[k]) / (data1[k] + data2[k]) for k in shared}
 
     diff = {}
@@ -62,17 +59,25 @@ def key_venn(dict1, dict2):
 
     return shared, dict1_only, dict2_only
 
-def key_diff(dict1, dict2):
-    missing_from_dict1 = list(set(dict2) - set(dict1))
-    missing_from_dict2 = list(set(dict1) - set(dict2))
-
-    return missing_from_dict1, missing_from_dict2
-
 def max_missing_times(sat, other, value):
     return {k: sat[k][0] if k in sat else value for k in other}
 
-def filter_by_list(d, l):
-    return {label: d[label] for label in l}
+def prob_diff(metrics, o_metrics, circuit):
+    diffs = {}
+
+    for ckt_input in metrics.probs[circuit]:
+        probs = metrics.probs[circuit][ckt_input]
+
+        input_diff = {}
+        for output in o_metrics.probs[circuit]:
+            if probs[output] is not None:
+                input_diff[output] = probs[output] - o_metrics.probs[circuit][output]
+            else:
+                input_diff[output] = 0
+
+        diffs[ckt_input] = input_diff
+
+    return diffs
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generic plotting tool. Modify this to create the specific plot you want.")
@@ -92,17 +97,18 @@ if __name__ == "__main__":
             a_metrics[i].calc_pcs(scaler=o_metrics.scaler, pca=o_metrics.pca)
 
     ### Processing below here ###
-    diff, unc = percent_diff(sat_mean, a_sats_mean[0], sat_unc, a_sats_unc[0])
-    shared, first_only, rerun_only = key_venn(sat_mean, a_sats_mean[0])
+    diff, unc = percent_diff(metrics.sat_iter, a_metrics[0].sat_iter)
+    # diff, unc = percent_diff(metrics.sat_mean, a_metrics[0].sat_mean, metrics.sat_unc, a_metrics[0].sat_unc)
+    shared, first_only, rerun_only = key_venn(metrics.sat_mean, a_metrics[0].sat_mean)
     sorted_labels = list(sorted(diff, key=lambda x: diff[x]))
 
     num_to_analyze = 10
 
-    increase = first_only.copy()
-    increase.extend(sorted_labels[-num_to_analyze + len(increase):][::-1])
+    decrease = first_only.copy()
+    decrease.extend(sorted_labels[-num_to_analyze + len(decrease):][::-1])
 
-    decrease = rerun_only.copy()
-    decrease.extend(sorted_labels[0:num_to_analyze - len(decrease)])
+    increase = rerun_only.copy()
+    increase.extend(sorted_labels[0:num_to_analyze - len(increase)])
 
     def get_metrics(labels):
         # CNF
@@ -125,8 +131,26 @@ if __name__ == "__main__":
         # How much to key gates interfere with each other?
         # What does fan-in and fan-out look like for each key gate?
 
+    # import pdb; pdb.set_trace()
     # get_metrics(increase)
     # get_metrics(decrease)
 
+    m = metrics
+    # m = a_metrics[0]
+    ckt = decrease[3]
+
+    diffs = prob_diff(m, o_metrics, ckt)
+
+    outputs = sorted(o_metrics.probs[ckt], key=lambda x: int(x[1:]))
+    table = dict_to_table(diffs, outputs, first_col_label="Input")
+    # table, deleted = remove_cols(table, key=lambda col: all(float(x) == 0 for x in col))
+
+    # print_in_sections(table, 8)
+    print(table_to_csv(table))
+
+    # print("Matched for all keys: %s" % (", ".join(deleted)))
+    print("Circuit: %s" % (ckt))
+    print("SAT attack time: %s" % (m.sat_mean[ckt]))
+    print("SAT iterations: %s" % (m.sat_iter[ckt]))
 
     ### Plot below here ###

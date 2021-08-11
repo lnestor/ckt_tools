@@ -9,6 +9,7 @@ class DirectoryMetrics:
         self.dir = directory
         self.cnf = None
         self.sat_all = None
+        self.sat_iter = None
         self.sat_mean = None
         self.sat_unc = None
         self.probs = None
@@ -32,6 +33,7 @@ class DirectoryMetrics:
             self.sat_all = self._read_csv_with_labels(sat_filename)
             self.sat_mean = {k: v[0] for k, v in self.sat_all.items()}
             self.sat_unc = {k: v[1] for k, v in self.sat_all.items()}
+            self.sat_iter = {k: v[2] for k, v in self.sat_all.items()}
 
         prob_filename = "%s/prob.json" % (self.metrics_dir)
         if os.path.isfile(prob_filename):
