@@ -96,6 +96,24 @@ if __name__ == "__main__":
         for i in range(len(a_metrics)):
             a_metrics[i].calc_pcs(scaler=o_metrics.scaler, pca=o_metrics.pca)
 
+    ckt = "Stat_1000_203.v"
+    diffs = prob_diff(metrics, o_metrics, ckt)
+
+    outputs = sorted(o_metrics.probs[ckt], key=lambda x: int(x[1:]))
+    table = dict_to_table(diffs, outputs, first_col_label="Input")
+    # table, deleted = remove_cols(table, key=lambda col: all(float(x) == 0 for x in col))
+
+    # print_in_sections(table, 8)
+    print(table_to_csv(table))
+
+    # print("Matched for all keys: %s" % (", ".join(deleted)))
+    print("Circuit: %s" % (ckt))
+    # print("SAT attack time: %s" % (metrics.sat_mean[ckt]))
+    # print("SAT iterations: %s" % (m.sat_iter[ckt]))
+
+
+
+"""
     ### Processing below here ###
     diff, unc = percent_diff(metrics.sat_iter, a_metrics[0].sat_iter)
     # diff, unc = percent_diff(metrics.sat_mean, a_metrics[0].sat_mean, metrics.sat_unc, a_metrics[0].sat_unc)
@@ -154,3 +172,4 @@ if __name__ == "__main__":
     print("SAT iterations: %s" % (m.sat_iter[ckt]))
 
     ### Plot below here ###
+"""
