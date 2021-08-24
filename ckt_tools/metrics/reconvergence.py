@@ -1,14 +1,10 @@
 import sys
 import os
-# God python is the worst
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
-
-from node_type import NodeType
 
 RECON_THRESHOLD = 0.9
 
 def measure_reconvergence(ckt_graph):
-    non_inputs = filter(lambda x: x.type != NodeType.INPUT, ckt_graph.nodes.values())
+    non_inputs = filter(lambda x: x.type != "input", ckt_graph.nodes.values())
     node_fanins = {}
     # node_recon = [measure_single_node_fanins(ckt_graph, n) for n in non_inputs]
     recon = {}

@@ -8,7 +8,7 @@ from ast_parser import parse_ast
 from helpers.logger import Logger
 from node_type import NodeType
 from searches.dfs import find_depth
-from structural_metrics.reconvergence import measure_reconvergence
+from metrics.reconvergence import measure_reconvergence
 from z3_builder import Z3Builder
 
 HEADERS = [
