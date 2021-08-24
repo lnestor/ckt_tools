@@ -9,7 +9,7 @@ import sys
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 from ast_parser import parse_ast
-from ckt_equivalence import check_eq_with_key
+from helpers.ckt_equivalence import check_eq_with_key
 
 def get_decl_names(moddef, cls):
     decl = [n for n in moddef.children() if len(n.children()) > 0 and isinstance(n.children()[0], cls)]

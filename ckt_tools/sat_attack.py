@@ -6,7 +6,7 @@ import time
 import z3
 
 from ast_parser import parse_ast
-from ckt_equivalence import check_eq_with_key
+from helpers.ckt_equivalence import check_eq_with_key
 from sat.circuit_solver import CircuitSolver
 from sat.dip_finder import DipFinder
 from sat.key_history import KeyHistory
