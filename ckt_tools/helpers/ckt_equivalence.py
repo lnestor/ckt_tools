@@ -1,5 +1,6 @@
 import z3
-from z3_builder import Z3Builder
+
+from parsing.z3_builder import Z3Builder
 
 def check_eq_with_key(key, locked_graph, unlocked_graph):
     builder = Z3Builder()

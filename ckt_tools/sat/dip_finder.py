@@ -1,7 +1,9 @@
 import z3
 
-from sat.model import extract
-from z3_builder import Z3Builder
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
+from model import extract
+from parsing.z3_builder import Z3Builder
 
 class DipFinder:
     def __init__(self, locked_graph):

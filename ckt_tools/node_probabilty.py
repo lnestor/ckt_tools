@@ -5,7 +5,7 @@ import numpy as np
 import os
 from pyverilog.vparser.parser import parse
 
-from ast_parser import parse_ast
+from parsing.ast_parser import parse_ast
 from helpers.progress import progress_bar
 from searches.postorder import Postorder
 from searches.key_in_output import KeyInOutput

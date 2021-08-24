@@ -4,7 +4,7 @@ from pyverilog.vparser.parser import parse
 from statistics import stdev as std
 import z3
 
-from ast_parser import parse_ast
+from parsing.ast_parser import parse_ast
 from helpers.logger import Logger
 from node_type import NodeType
 from searches.dfs import find_depth

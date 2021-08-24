@@ -5,14 +5,14 @@ import random
 import time
 import z3
 
-from ast_parser import parse_ast
+from parsing.ast_parser import parse_ast
 from helpers.ckt_equivalence import check_eq_with_key
 from sat.circuit_solver import CircuitSolver
 from sat.dip_finder import DipFinder
 from sat.key_history import KeyHistory
 from sat.logger import Logger
 from sat.model import extract
-from z3_builder import Z3Builder
+from parsing.z3_builder import Z3Builder
 
 CIRCUITS_DONT_MATCH = 0
 CIRCUITS_MATCH = 1
