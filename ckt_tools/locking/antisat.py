@@ -1,8 +1,12 @@
 import argparse
+import os
 from pyverilog.ast_code_generator.codegen import ASTCodeGenerator
 import pyverilog.vparser.ast as vast
 from pyverilog.vparser.parser import parse
 import random
+import sys
+
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 from ast_parser import parse_ast
 from ckt_equivalence import check_eq_with_key
