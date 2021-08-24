@@ -6,8 +6,8 @@ import z3
 
 from ast_parser import parse_ast
 from dfs import find_depth
+from helpers.logger import Logger
 from node_type import NodeType
-from logger import Logger
 from structural_metrics.reconvergence import measure_reconvergence
 from z3_builder import Z3Builder
 

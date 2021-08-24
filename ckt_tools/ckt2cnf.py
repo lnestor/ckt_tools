@@ -3,7 +3,7 @@ from pyverilog.vparser.parser import parse
 import z3
 
 from ast_parser import parse_ast
-from logger import Logger
+from helpers.logger import Logger
 from z3_builder import Z3Builder
 
 HEADERS = [
