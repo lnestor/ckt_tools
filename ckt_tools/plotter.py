@@ -96,21 +96,42 @@ if __name__ == "__main__":
         for i in range(len(a_metrics)):
             a_metrics[i].calc_pcs(scaler=o_metrics.scaler, pca=o_metrics.pca)
 
-    ckt = "Stat_1000_203.v"
-    diffs = prob_diff(metrics, o_metrics, ckt)
+    ### Processing below here ###
+    from sklearn.decomposition import PCA
+    from sklearn.preprocessing import StandardScaler
+    import numpy as np
 
-    outputs = sorted(o_metrics.probs[ckt], key=lambda x: int(x[1:]))
-    table = dict_to_table(diffs, outputs, first_col_label="Input")
-    # table, deleted = remove_cols(table, key=lambda col: all(float(x) == 0 for x in col))
+    data = {}
+    for circuit in metrics.probs:
+        if not np.any(np.isnan(metrics.probs[circuit])):
+            data[circuit] = metrics.probs[circuit]
 
-    # print_in_sections(table, 8)
-    print(table_to_csv(table))
+    scaler = StandardScaler()
+    scaled_data = scaler.fit_transform(list(data.values()))
+    scaled = {k: v for k, v in zip(list(data.keys()), scaled_data)}
 
-    # print("Matched for all keys: %s" % (", ".join(deleted)))
-    print("Circuit: %s" % (ckt))
-    # print("SAT attack time: %s" % (metrics.sat_mean[ckt]))
-    # print("SAT iterations: %s" % (m.sat_iter[ckt]))
+    pca = PCA()
+    pc_data = pca.fit_transform(list(scaled.values()))
+    pcs = {k: v for k, v in zip(list(data.keys()), pc_data)}
+    pc1s = {k: v[0] for k, v in zip(list(data.keys()), pc_data)}
+    pc2s = {k: v[1] for k, v in zip(list(data.keys()), pc_data)}
 
+
+    ### Plot below here ###
+    import matplotlib.pyplot as plt
+
+    shared, first_only, rerun_only = key_venn(pc1s, metrics.sat_iter)
+
+    to_plot_x = [pc1s[k] for k in pc1s]
+    to_plot_y = [pc2s[k] for k in pc1s]
+    to_plot_z = [metrics.sat_iter[k] for k in shared]
+
+    # fig = plt.figure()
+    # ax = fig.add_subplot()
+
+    plt.scatter(to_plot_x, to_plot_y)
+    # ax.scatter3D(to_plot_x, to_plot_y, to_plot_z)
+    plt.show()
 
 
 """
@@ -152,24 +173,4 @@ if __name__ == "__main__":
     # import pdb; pdb.set_trace()
     # get_metrics(increase)
     # get_metrics(decrease)
-
-    m = metrics
-    # m = a_metrics[0]
-    ckt = decrease[3]
-
-    diffs = prob_diff(m, o_metrics, ckt)
-
-    outputs = sorted(o_metrics.probs[ckt], key=lambda x: int(x[1:]))
-    table = dict_to_table(diffs, outputs, first_col_label="Input")
-    # table, deleted = remove_cols(table, key=lambda col: all(float(x) == 0 for x in col))
-
-    # print_in_sections(table, 8)
-    print(table_to_csv(table))
-
-    # print("Matched for all keys: %s" % (", ".join(deleted)))
-    print("Circuit: %s" % (ckt))
-    print("SAT attack time: %s" % (m.sat_mean[ckt]))
-    print("SAT iterations: %s" % (m.sat_iter[ckt]))
-
-    ### Plot below here ###
 """

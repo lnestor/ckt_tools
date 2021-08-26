@@ -13,6 +13,7 @@ class DirectoryMetrics:
         self.sat_mean = None
         self.sat_unc = None
         self.probs = None
+        self.rawp = None
         self.struct = None
 
         self.metrics_dir = "%s/metrics" % (self.dir)
@@ -35,10 +36,14 @@ class DirectoryMetrics:
             self.sat_unc = {k: v[1] for k, v in self.sat_all.items()}
             self.sat_iter = {k: v[2] for k, v in self.sat_all.items()}
 
-        prob_filename = "%s/prob.json" % (self.metrics_dir)
+        rawp_filename = "%s/rawp.json" % (self.metrics_dir)
+        if os.path.isfile(rawp_filename):
+            with open(rawp_filename) as f:
+                self.rawp = json.load(f)
+
+        prob_filename = "%s/prob.csv" % (self.metrics_dir)
         if os.path.isfile(prob_filename):
-            with open(prob_filename) as f:
-                self.probs = json.load(f)
+            self.probs = self._read_csv_with_labels(prob_filename)
 
     def calc_pcs(self, scaler=None, pca=None):
         if scaler is None and pca is None:
@@ -59,7 +64,7 @@ class DirectoryMetrics:
     def _read_csv_with_labels(self, filename):
         labels = np.genfromtxt(filename, usecols=0, dtype=str, delimiter=",")
         labels[1:] = [os.path.basename(name) for name in labels[1:]]
-        data = np.genfromtxt(filename, delimiter=",", names=True)
+        data = np.genfromtxt(filename, delimiter=",", names=True, comments=None)
         return {label: list(row)[1:] for label, row in zip(labels[1:], data)}
 
     def _apply_pca_transform(self, data, scaler, pca):

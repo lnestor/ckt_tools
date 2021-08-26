@@ -108,6 +108,8 @@ if __name__ == "__main__":
     f.write("\n")
 
     for circuit in rawp:
+        print(circuit)
+
         probs = rawp[circuit]
         o_probs = o_rawp[circuit]
 
