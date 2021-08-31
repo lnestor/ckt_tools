@@ -1,6 +1,8 @@
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
 import argparse
 
-from dir_metrics import DirectoryMetrics
+from analysis.helpers.dir_metrics import DirectoryMetrics
 from helpers.array import remove_cols
 from helpers.dict import filter_by_list
 from helpers.table import dict_to_table, print_in_sections, table_to_csv
