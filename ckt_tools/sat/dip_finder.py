@@ -1,8 +1,10 @@
+import os
+import sys
 import z3
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
-from model import extract
+from .model import extract
 from parsing.z3_builder import Z3Builder
 
 class DipFinder:

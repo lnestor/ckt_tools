@@ -1,7 +1,7 @@
 import pyverilog.vparser.ast as vast
 
-from node import Node
-from circuit_graph import CircuitGraph
+from .node import Node
+from .circuit_graph import CircuitGraph
 
 def parse_ast(ast, ignore_assigns=False):
     """Parses a Verilog abstract syntax tree into a CircuitGraph.
