@@ -5,13 +5,14 @@ class Z3Builder():
 
     """
 
-    def build(self, graph, key_suffix="", input_map={}):
+    def build(self, graph, key_suffix="", input_map={}, to_negate=[]):
         """Builds a z3 representation of a circuit.
 
         Parameters:
             graph: the CircuitGraph representing the circuit
             key_suffix: optional suffix to add to the end of all key inputs
             input_map: optional literal replacement for input values
+            to_negate: optional list of nodes to add inverter to
 
         Returns:
             dict: outputs in the form of {output_name: z3}
@@ -22,6 +23,7 @@ class Z3Builder():
         self.inputs = []
         self.key_suffix = key_suffix
         self.input_map = input_map
+        self.to_negate = to_negate
         outputs = {}
 
         for name in graph.outputs:
@@ -85,7 +87,7 @@ class Z3Builder():
 
         """
         if node.type.startswith("and"):
-            self.z3_repr[node.output] = z3.And(*fanin)
+            node_repr = z3.And(*fanin)
         elif node.type.startswith("xor"):
             total_xor = z3.Xor(fanin[0], fanin[1])
 
@@ -93,26 +95,31 @@ class Z3Builder():
                 total_xor = z3.Xor(total_xor, fanin[i + 2])
 
             # self.z3_repr[node.output] = z3.Xor(*fanin)
-            self.z3_repr[node.output] = total_xor
+            node_repr = total_xor
         elif node.type.startswith("or"):
-            self.z3_repr[node.output] = z3.Or(*fanin)
+            node_repr = z3.Or(*fanin)
         elif node.type == "not":
-            self.z3_repr[node.output] = z3.Not(*fanin)
+            node_repr = z3.Not(*fanin)
         elif node.type.startswith("nand"):
-            self.z3_repr[node.output] = z3.Not(z3.And(*fanin))
+            node_repr = z3.Not(z3.And(*fanin))
         elif node.type.startswith("xnor"):
             total_xor = z3.Xor(fanin[0], fanin[1])
 
             for i in range(len(fanin) - 2):
                 total_xor = z3.Xor(total_xor, fanin[i + 2])
 
-            self.z3_repr[node.output] = z3.Not(total_xor)
+            node_repr = z3.Not(total_xor)
         elif node.type.startswith("nor"):
-            self.z3_repr[node.output] = z3.Not(z3.Or(*fanin))
+            node_repr = z3.Not(z3.Or(*fanin))
         elif node.type == "buf":
-            self.z3_repr[node.output] = z3.Not(z3.Not(*fanin))
+            node_repr = z3.Not(z3.Not(*fanin))
         elif node.type == "assign":
-            self.z3_repr[node.output] = fanin[0]
+            node_repr = fanin[0]
         else:
             import pdb; pdb.set_trace()
             raise
+
+        if node.output in self.to_negate:
+            self.z3_repr[node.output] = z3.Not(node_repr)
+        else:
+            self.z3_repr[node.output] = node_repr

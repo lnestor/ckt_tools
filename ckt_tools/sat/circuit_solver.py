@@ -28,5 +28,3 @@ class CircuitSolver:
             s.pop()
 
         return values
-
-

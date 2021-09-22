@@ -1,4 +1,8 @@
+import sys
+import os
+
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
+sys.path.remove(sys.path[0])
 
 import argparse
 
@@ -124,15 +128,19 @@ if __name__ == "__main__":
 
     shared, first_only, rerun_only = key_venn(pc1s, metrics.sat_iter)
 
-    to_plot_x = [pc1s[k] for k in pc1s]
-    to_plot_y = [pc2s[k] for k in pc1s]
+    to_plot_x = [pc1s[k] for k in shared]
+    to_plot_y = [pc2s[k] for k in shared]
     to_plot_z = [metrics.sat_iter[k] for k in shared]
 
     # fig = plt.figure()
     # ax = fig.add_subplot()
 
-    plt.scatter(to_plot_x, to_plot_y)
+    # plt.scatter(to_plot_x, to_plot_y)
+    plt.scatter(to_plot_y, to_plot_z)
     # ax.scatter3D(to_plot_x, to_plot_y, to_plot_z)
+    plt.title("PC2")
+    plt.xlabel("PC2")
+    plt.ylabel("SAT Iterations")
     plt.show()
 
 
