@@ -48,6 +48,7 @@ def add_mux(node, moddef):
     original_signal_name = node.children()[0].children()[2].children()[0].name
     modified_signal_name = original_signal_name + "_modified"
 
+    # Need to add wire names to wire declarations
     mux_not = create_ilist("not", "MUX_NOT_0", "mux_not", ["keyIn_mux_0_0"])
     mux_and_0 = create_ilist("and", "MUX_AND_0", "mux_and_0", [original_signal_name, "mux_not"])
     mux_and_1 = create_ilist("and", "MUX_AND_1", "mux_and_1", [modified_signal_name, "keyIn_mux_0_0"])
