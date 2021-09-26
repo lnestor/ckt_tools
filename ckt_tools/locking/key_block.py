@@ -8,6 +8,7 @@ import sys
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 from shared import *
+from comparator import ComparatorCircuit
 from parsing.ast_parser import parse_ast
 from helpers.ckt_equivalence import check_eq_with_key
 
@@ -30,30 +31,14 @@ from helpers.ckt_equivalence import check_eq_with_key
 
 
 def create_xor_gates(moddef, key_inputs, primary_inputs):
-    xor_gates = [None] * len(key_inputs)
-
-    for i in range(len(key_inputs)):
-        instance = "xor_0_%i" % (i)
-        output = "xor_output_0_%i" % (i)
-        xor = create_ilist(moddef, "xor", instance, output, [key_inputs[i].name, primary_inputs[i].name])
-
-        xor_gates[i] = xor
-
+    key_input_names = [i.name for i in key_inputs]
+    primary_input_names = [i.name for i in primary_inputs]
+    xor_gates = verilog_zip(moddef, "xor", key_input_names, primary_input_names, "zip")
     return xor_gates
-
-# def create_fa(moddef, A, B, Cin, unique_name):
-#     xor_AB = create_ilist(moddef, "xor", unique_name + "_xor_AB", unique_name + "_xor_AB_output", [A, B])
-#     xor_ABC = create_ilist(moddef, "xor", unique_name + "_xor_ABC", unique_name + "_sum", [unique_name + "_xor_AB_output", Cin])
-#     and_abc = create_ilist(moddef, "and", unique_name + "_and_ABC", unique_name + "_and_ABC_output", [unique_name + "_xor_AB", Cin])
-#     and_ab = create_ilist(moddef, "and", unique_name + "_and_AB", unique_name + "_and_AB_output", [A, B])
-#     or_cout = create_ilist(moddef, "or", unique_name + "_or", unique_name + "_carry", [unique_name + "_and_ABC", unique_name + "_and_AB"])
-
-#     return xor_ABC, or_cout
 
 def create_ha(moddef, A, B, unique_name):
     ha_sum = create_ilist(moddef, "xor", unique_name + "_sum", unique_name + "_sum", [A, B])
     ha_cout = create_ilist(moddef, "and", unique_name + "_carry", unique_name + "_carry", [A, B])
-
     return ha_sum, ha_cout
 
 def create_adder(moddef, xor_gates):
@@ -84,11 +69,11 @@ def create_h_comparator(moddef, adder_outputs, h):
 
     xor_gates = [None] * len(adder_outputs)
     for i in range(len(adder_outputs)):
-        bit = h_bits[i] == "1"
-        xor = create_ilist(moddef, "xor", "comparator_0_%i" % (i), "comparator_0_%i" % (i), [get_ilist_name(adder_outputs[i]), str(bit)])
+        bit = h_bits[::-1][i]
+        xor = create_ilist(moddef, "xnor", "comparator_0_%i" % (i), "comparator_0_%i" % (i), [get_ilist_name(adder_outputs[i]), str(bit)])
         xor_gates[i] = xor
 
-    c_or = create_ilist(moddef, "or", "comparator_or", "comparator_output", [get_ilist_name(x) for x in xor_gates])
+    c_or = create_ilist(moddef, "and", "comparator_and", "comparator_output", [get_ilist_name(x) for x in xor_gates])
 
     return c_or
 
@@ -98,39 +83,15 @@ def create_hamming_distance_calc(moddef, h, key_inputs, primary_inputs):
     compare_signal = create_h_comparator(moddef, adder_outputs, h)
     return compare_signal
 
-def create_mask(moddef, percent_wrong, key_inputs):
+def create_mask(moddef, percent_masked, key_inputs):
     num_keys = 2**len(key_inputs)
-    num_wrong_keys = math.floor(percent_wrong * num_keys)
-    num_bits_needed = math.floor(math.log2(num_keys))
+    num_masked = math.ceil(percent_masked * num_keys)
 
-    wrong_key_vals = random.sample(range(0, num_keys), num_wrong_keys)
-    wrong_keys = [bin(v)[2:].rjust(num_bits_needed, "0") for v in wrong_key_vals]
+    masked_vals = random.sample(range(0, num_keys), num_masked)
+    masked_patterns = [bin(v)[2:].rjust(len(key_inputs), "0") for v in masked_vals]
 
-    # Create all needed XOR gates. If some aren't used, they'll still be present.
-    # But they won't be factored in to the SAT attack
-    xor_0_gates = [None] * len(key_inputs)
-    xor_1_gates = [None] * len(key_inputs)
-    for i, key_input in enumerate(key_inputs):
-        xor_0 = create_ilist(moddef, "xor", "mask_xor0_0_%i" % (i), "mask_xor0_0_%i" % (i), [key_input.name, "0"])
-        xor_1 = create_ilist(moddef, "xor", "mask_xor1_0_%i" % (i), "mask_xor1_0_%i" % (i), [key_input.name, "1"])
-        xor_0_gates[i] = xor_0
-        xor_1_gates[i] = xor_1
-
-    masks = [None] * len(wrong_keys)
-    for i, key in enumerate(wrong_keys):
-        bit_comparisons = [None] * len(key)
-
-        for j, bit in enumerate(key[::-1]):
-            if bit == "0":
-                bit_comparisons[j] = xor_0_gates[j]
-            else:
-                bit_comparisons[j] = xor_1_gates[j]
-
-        or_gate = create_ilist(moddef, "or", "mask_0_%i" % (i), "mask_0_%i" % (i), [get_ilist_name(g) for g in bit_comparisons])
-        masks[i] = or_gate
-
-    mask = create_ilist(moddef, "or", "mask_final", "mask_final", [get_ilist_name(g) for g in masks])
-    return mask
+    mask = ComparatorCircuit(moddef, "mask", key_inputs).create(masked_patterns)
+    return mask, masked_patterns
 
 def insert_into_circuit(moddef, Y, hd_calc, mask):
     and_gate = create_ilist(moddef, "and", "key_block_output", "key_block_output", [get_ilist_name(hd_calc), get_ilist_name(mask)])
@@ -172,14 +133,19 @@ if __name__ == "__main__":
     primary_inputs = get_decl_names(moddef, vast.Input)
     nodes = moddef.children()[5:]
 
-    Y = find_Y_candidate(moddef, args.randomize_Y)
     key_inputs = create_key_inputs(moddef, args.keybits if args.keybits is not None else len(primary_inputs))
+    if(args.h > len(key_inputs)):
+        print("Error: Hamming distance requested larger than key length")
+        exit()
+
     hd_calc = create_hamming_distance_calc(moddef, args.h, key_inputs, primary_inputs)
-    mask = create_mask(moddef, args.percent_wrong, key_inputs)
+    mask, masked_patterns = create_mask(moddef, args.percent_wrong, key_inputs)
+
+    Y = find_Y_candidate(moddef, args.randomize_Y)
     insert_into_circuit(moddef, Y, hd_calc, mask)
 
     if args.check_equivalence:
-        expected_key = get_key(key_inputs)
+        expected_key = {key.name: bit == "1" for key, bit in zip(key_inputs, masked_patterns[0])}
         locked_graph = parse_ast(ast)
 
         unlocked_ast, _ = parse([args.verilog_file], debug=False)

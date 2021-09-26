@@ -62,3 +62,15 @@ def create_key_inputs(moddef, count):
 
 def get_ilist_name(ilist):
     return ilist.children()[0].children()[0].children()[0].name
+
+def verilog_zip(moddef, gate_type, signals1, signals2, name):
+    gates = [None] * len(signals1)
+
+    for i in range(len(signals1)):
+        instance = "%s_%s_%i" % (name, gate_type, i)
+        output = "%s_%s_output_%i" % (name, gate_type, i)
+        gate = create_ilist(moddef, gate_type, instance, output, [signals1[i], signals2[i]])
+        gates[i] = gate
+
+    return gates
+

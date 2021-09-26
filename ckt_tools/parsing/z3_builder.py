@@ -48,6 +48,12 @@ class Z3Builder():
         if isinstance(name, int):
             return name == 1
 
+        if name in ["True", "False"]:
+            return name == "True"
+
+        if name in ["1", "0"]:
+            return name == "1"
+
         try:
             node = nodes[name]
         except:
