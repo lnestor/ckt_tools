@@ -16,7 +16,7 @@ def progress_bar(current, total, bar_length=30):
 
 def filenames(args, f):
     locked_file = os.path.join(args.locked_dir, f)
-    oracle_file = os.path.join(args.oracle_dir, f)
+    oracle_file = os.path.join(args.oracle, f)
     csv_file = os.path.join(args.locked_dir, "metrics/sat.csv") if args.csv else None
 
     return locked_file, oracle_file, csv_file
@@ -31,11 +31,18 @@ def run(locked_file, oracle_file, csv_file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run SAT attacks against all benchmarks in a directory")
     parser.add_argument("locked_dir", help="The directory with the locked benchmarks.")
-    parser.add_argument("oracle_dir", help="The directory with the oracle benchmarks.")
+    parser.add_argument("oracle", help="Either the oracle file or a directory with oracle files")
     parser.add_argument("--csv", action="store_true", help="Logs metrics in metrics/sat.csv file when present.")
     parser.add_argument("-t", "--timeout", type=int, default=3600, help="Maximum time for a SAT attack to run.")
 
     args = parser.parse_args()
+
+    if os.path.isfile(args.oracle):
+        oracle_is_file = True
+    elif os.path.isdir(args.oracle):
+        oracle_is_file = False
+    else:
+        raise
 
     files = [f for f in os.listdir(args.locked_dir) if f.endswith(".v")]
     files.sort(key=lambda x: int(re.search("\d+", x).group()))
@@ -43,6 +50,9 @@ if __name__ == "__main__":
     to_retry = []
     for i, f in enumerate(files):
         locked_file, oracle_file, csv_file = filenames(args, f)
+
+        if oracle_is_file:
+            oracle_file = args.oracle
 
         print("\nRunning SAT attack %i/%i (%.0f%%) " % (i + 1, len(files), i / len(files)), end="")
         progress_bar(i + 1, len(files))
