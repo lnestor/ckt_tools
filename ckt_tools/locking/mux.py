@@ -7,6 +7,7 @@ import sys
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
+from shared import *
 from parsing.ast_parser import parse_ast
 
 def find_last_input(moddef):
@@ -16,11 +17,11 @@ def find_last_input(moddef):
 
     return -1
 
-def add_key(moddef):
+def add_key(moddef, number):
     portlist = moddef.children()[1]
     ports = list(portlist.ports)
 
-    name = "keyIn_mux_0_0"
+    name = "keyIn_0_%i" % (number)
     port = vast.Port(name, None, None, None)
     ports.append(port)
 
@@ -32,31 +33,18 @@ def add_key(moddef):
     items.insert(last_input_index - 1, vast.Decl([vast.Input(name)]))
     moddef.items = tuple(items)
 
-def create_ilist(module, name, output, inputs):
-    out_port = vast.PortArg(None, vast.Identifier(output))
-    in_ports = [vast.PortArg(None, vast.Identifier(name)) for name in inputs]
+    return [vast.Input(name)]
 
-    portlist = (out_port, *in_ports)
-    parameterlist = ()
-    instance = vast.Instance(module, name, portlist, parameterlist)
-    ilist = vast.InstanceList(module, (), (instance,))
-
-    return ilist
-
-def add_mux(node, moddef):
+def add_mux(moddef, node, primary_inputs, new_keys):
     output_name = node.children()[0].children()[0].children()[0].name
     original_signal_name = node.children()[0].children()[2].children()[0].name
     modified_signal_name = original_signal_name + "_modified"
 
-    # Need to add wire names to wire declarations
-    mux_not = create_ilist("not", "MUX_NOT_0", "mux_not", ["keyIn_mux_0_0"])
-    mux_and_0 = create_ilist("and", "MUX_AND_0", "mux_and_0", [original_signal_name, "mux_not"])
-    mux_and_1 = create_ilist("and", "MUX_AND_1", "mux_and_1", [modified_signal_name, "keyIn_mux_0_0"])
-    mux_or = create_ilist("or", "MUX_OR_1", output_name, ["mux_and_0", "mux_and_1"])
-
-    items = list(moddef.items)
-    items.extend([mux_not, mux_and_0, mux_and_1, mux_or])
-    moddef.items = tuple(items)
+    mux_xor = create_ilist(moddef, "xor", "MUX_XOR_0", "mux_xor", [new_keys[0].name, primary_inputs.name])
+    mux_not = create_ilist(moddef, "not", "MUX_NOT_0", "mux_not", ["mux_xor"])
+    mux_and_0 = create_ilist(moddef, "and", "MUX_AND_0", "mux_and_0", [original_signal_name, "mux_not"])
+    mux_and_1 = create_ilist(moddef, "and", "MUX_AND_1", "mux_and_1", [modified_signal_name, "mux_xor"])
+    mux_or = create_ilist(moddef, "or", "MUX_OR_1", output_name, ["mux_and_0", "mux_and_1"], add_wire=False)
 
     node.children()[0].children()[0].children()[0].name = modified_signal_name
 
@@ -71,13 +59,15 @@ if __name__ == "__main__":
     ast, _ = parse([args.verilog_file], debug=False)
     moddef = ast.children()[0].children()[0]
 
+    primary_inputs = [node for node in get_decl_names(moddef, vast.Input) if "key" not in node.name]
+    key_inputs = [node for node in get_decl_names(moddef, vast.Input) if "key" in node.name]
     nodes = moddef.children()[5:]
 
     ilists = list(filter(lambda x: isinstance(x, vast.InstanceList), nodes))
     node_of_interest = list(filter(lambda x: x.children()[0].name == args.node, ilists))[0]
 
-    add_key(moddef)
-    add_mux(node_of_interest, moddef)
+    new_keys = add_key(moddef, number=len(key_inputs))
+    add_mux(moddef, node_of_interest, primary_inputs[-1], new_keys)
 
     codegen = ASTCodeGenerator()
     rslt = codegen.visit(ast)
