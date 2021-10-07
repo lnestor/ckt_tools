@@ -2,6 +2,14 @@ import copy
 import random
 import pyverilog.vparser.ast as vast
 
+def get_node_from_name(moddef, name):
+    ilists = list(filter(lambda x: isinstance(x, vast.InstanceList), moddef.children()[5:]))
+    return list(filter(lambda x: x.children()[0].name == name, ilists))[0]
+
+def get_node_from_output(moddef, output_name):
+    ilists = list(filter(lambda x: isinstance(x, vast.InstanceList), moddef.children()[5:]))
+    return list(filter(lambda x: x.children()[0].children()[0].children()[0].name == output_name, ilists))[0]
+
 def get_decl_names(moddef, cls):
     decl = [n for n in moddef.children() if len(n.children()) > 0 and isinstance(n.children()[0], cls)]
     names = [c for n in decl for c in n.children()]
@@ -11,6 +19,30 @@ def get_ilist_names(moddef):
     ilists = [n for n in moddef.children() if isinstance(n, vast.InstanceList)]
     names = [get_ilist_name(n) for n in ilists]
     return names
+
+def find_last_input(moddef):
+    for index in range(2, len(moddef.children())):
+        if isinstance(moddef.children()[index].children()[0], vast.Input) and not isinstance(moddef.children()[index + 1].children()[0], vast.Input):
+            return index
+
+    return -1
+
+def create_key(moddef, key_name):
+    portlist = moddef.children()[1]
+    ports = list(portlist.ports)
+    items = list(moddef.items)
+
+    port = vast.Port(key_name, None, None, None)
+    ports.append(port)
+
+    last_input_index = find_last_input(moddef)
+    # Not sure why it is -1, some difference between .items and .children()
+    items.insert(last_input_index - 1, vast.Decl([vast.Input(key_name)]))
+
+    portlist.ports = tuple(ports)
+    moddef.items = tuple(items)
+
+    return vast.Input(key_name)
 
 def create_ilist(moddef, module, name, output, inputs, add_wire = True):
     wires = list(moddef.children()[4].list)

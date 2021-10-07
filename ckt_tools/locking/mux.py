@@ -10,49 +10,45 @@ sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from shared import *
 from parsing.ast_parser import parse_ast
 
-def find_last_input(moddef):
-    for index in range(2, len(moddef.children())):
-        if isinstance(moddef.children()[index].children()[0], vast.Input) and not isinstance(moddef.children()[index + 1].children()[0], vast.Input):
-            return index
 
-    return -1
+def add_keys(moddef, number, start):
+    return [create_key(moddef, "keyIn_0_%i" % (start + i)) for i in range(number)]
 
-def add_key(moddef, number):
-    portlist = moddef.children()[1]
-    ports = list(portlist.ports)
+def add_muxes(moddef, node_of_interest, primary_inputs, new_keys):
+    # Note: this assumes the muxes are hooked up to a key gate where the
+    # key bit is the first argument and the circuit signal is the second
+    input1 = node_of_interest.children()[0].children()[2].children()[0].name
+    input2 = "flipped_signal"
+    output = node_of_interest.children()[0].children()[0].children()[0].name
 
-    name = "keyIn_0_%i" % (number)
-    port = vast.Port(name, None, None, None)
-    ports.append(port)
+    node_of_interest.children()[0].children()[0].children()[0].name = input2
 
-    portlist.ports = tuple(ports)
+    for i in range(len(new_keys)):
+        portnames = (input1, input2, output)
+        mux_output = add_mux(moddef, portnames, primary_inputs[-1 * i - 1], new_keys[i], i)
 
-    last_input_index = find_last_input(moddef)
-    items = list(moddef.items)
-    # Not sure why it is -1, some difference between .items and .children()
-    items.insert(last_input_index - 1, vast.Decl([vast.Input(name)]))
-    moddef.items = tuple(items)
+        if i < len(new_keys) - 1:
+            mux_output.children()[0].children()[0].children()[0].name = "mux%i_output" % i
+            input1 = mux_output.children()[0].children()[0].children()[0].name
 
-    return [vast.Input(name)]
 
-def add_mux(moddef, node, primary_inputs, new_keys):
-    output_name = node.children()[0].children()[0].children()[0].name
-    original_signal_name = node.children()[0].children()[2].children()[0].name
-    modified_signal_name = original_signal_name + "_modified"
+def add_mux(moddef, portnames, primary_input, key, count):
+    input1, input2, output = portnames
 
-    mux_xor = create_ilist(moddef, "xor", "MUX_XOR_0", "mux_xor", [new_keys[0].name, primary_inputs.name])
-    mux_not = create_ilist(moddef, "not", "MUX_NOT_0", "mux_not", ["mux_xor"])
-    mux_and_0 = create_ilist(moddef, "and", "MUX_AND_0", "mux_and_0", [original_signal_name, "mux_not"])
-    mux_and_1 = create_ilist(moddef, "and", "MUX_AND_1", "mux_and_1", [modified_signal_name, "mux_xor"])
-    mux_or = create_ilist(moddef, "or", "MUX_OR_1", output_name, ["mux_and_0", "mux_and_1"], add_wire=False)
+    mux_xor = create_ilist(moddef, "xor", "G_mux%i_xor" % count, "mux%i_xor" % count, [key.name, primary_input.name])
+    mux_not = create_ilist(moddef, "not", "G_mux%i_not" % count, "mux%i_not" % count, ["mux%i_xor" % count])
+    mux_and_0 = create_ilist(moddef, "and", "G_mux%i_and_0" % count, "mux%i_and_0" % count, [input1, "mux%i_not" % count])
+    mux_and_1 = create_ilist(moddef, "and", "G_mux%i_and_1" % count, "mux%i_and_1" % count, [input2, "mux%i_xor" % count])
+    mux_or = create_ilist(moddef, "or", "G_mux%i_or" % count, output, ["mux%i_and_0" % count, "mux%i_and_1" % count], add_wire=False)
 
-    node.children()[0].children()[0].children()[0].name = modified_signal_name
+    return mux_or
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Add an Anti-SAT block to a circuit.")
     parser.add_argument("verilog_file", help="The circuit's verilog file.")
     parser.add_argument("node", help="The node to add the mux to.")
     parser.add_argument("-o", "--output", help="The verilog file to output to. Otherwise it will print to the screen.")
+    parser.add_argument("-n", "--number", type=int, default=1, help="The number of multiplexeres to add.")
 
     args = parser.parse_args()
 
@@ -61,13 +57,10 @@ if __name__ == "__main__":
 
     primary_inputs = [node for node in get_decl_names(moddef, vast.Input) if "key" not in node.name]
     key_inputs = [node for node in get_decl_names(moddef, vast.Input) if "key" in node.name]
-    nodes = moddef.children()[5:]
+    node_of_interest = get_node_from_name(moddef, args.node)
 
-    ilists = list(filter(lambda x: isinstance(x, vast.InstanceList), nodes))
-    node_of_interest = list(filter(lambda x: x.children()[0].name == args.node, ilists))[0]
-
-    new_keys = add_key(moddef, number=len(key_inputs))
-    add_mux(moddef, node_of_interest, primary_inputs[-1], new_keys)
+    new_keys = add_keys(moddef, args.number, len(key_inputs))
+    add_muxes(moddef, node_of_interest, primary_inputs, new_keys)
 
     codegen = ASTCodeGenerator()
     rslt = codegen.visit(ast)
