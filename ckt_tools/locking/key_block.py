@@ -12,24 +12,6 @@ from comparator import ComparatorCircuit
 from parsing.ast_parser import parse_ast
 from helpers.ckt_equivalence import check_eq_with_key
 
-# def get_key(key_inputs):
-#     """Gets the key value for the Anti-SAT circuit.
-
-#     Currently, since we only use XOR gates when combining the inputs with
-#     the key bits, all that matters is that the corresponding bits to
-#     g and gbar are equal. Therefore, we just choose a random value to assign.
-
-#     """
-#     key = {}
-
-#     for i in range(int(len(key_inputs) / 2)):
-#         value = random.choice([True, False])
-#         key[key_inputs[i].name] = value
-#         key[key_inputs[i + int(len(key_inputs) / 2)].name] = value
-
-#     return key
-
-
 def create_xor_gates(moddef, key_inputs, primary_inputs):
     key_input_names = [i.name for i in key_inputs]
     primary_input_names = [i.name for i in primary_inputs]
