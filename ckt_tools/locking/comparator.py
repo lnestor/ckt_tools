@@ -11,8 +11,9 @@ class ComparatorCircuit:
     def create(self, patterns):
         """Creates a circuit that compares inputs to a set of defined patterns.
 
-        If the inputs match any pattern, a 1 is returned. If the inputs don't
-        match any patterns, a 0 is returned.
+        If the inputs match any pattern, a 0 is returned. If the inputs don't
+        match any patterns, a 1 is returned. This is basically a comparator with
+        a NOT gate attached to the end.
         """
 
         or_gates = [None] * len(patterns)
@@ -22,14 +23,18 @@ class ComparatorCircuit:
                 xor_gate = self._get_xor_gate(bit_pos, bit, self.inputs[bit_pos])
                 xor_gates[bit_pos] = xor_gate
 
-            gate_name = self.name + "_and_%i" % (i)
-            gate_input_names = [get_ilist_name(x) for x in xor_gates]
-            or_gate = create_ilist(self.moddef, "and", gate_name, gate_name, gate_input_names)
-            or_gates[i] = or_gate
+            if len(pattern) > 1:
+                gate_name = self.name + "_and_%i" % (i)
+                gate_input_names = [get_ilist_name(x) for x in xor_gates]
+                or_gate = create_ilist(self.moddef, "and", gate_name, gate_name, gate_input_names)
+                or_gates[i] = or_gate
+            else:
+                or_gates[i] = xor_gate
 
         gate_name = self.name + "_output"
         gate_input_names = [get_ilist_name(x) for x in or_gates]
-        final_output = create_ilist(self.moddef, "nor", gate_name, gate_name, gate_input_names)
+        instance_type = "nor" if len(patterns) > 1 else " not"
+        final_output = create_ilist(self.moddef, instance_type, gate_name, gate_name, gate_input_names)
 
         return final_output
 
