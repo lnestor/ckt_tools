@@ -15,6 +15,10 @@ def get_decl_names(moddef, cls):
     names = [c for n in decl for c in n.children()]
     return names
 
+def get_ilists(moddef):
+    ilists = [n for n in moddef.children() if isinstance(n, vast.InstanceList)]
+    return ilists
+
 def get_ilist_names(moddef):
     ilists = [n for n in moddef.children() if isinstance(n, vast.InstanceList)]
     names = [get_ilist_name(n) for n in ilists]
@@ -94,6 +98,9 @@ def create_key_inputs(moddef, count):
 
 def get_ilist_name(ilist):
     return ilist.children()[0].children()[0].children()[0].name
+
+def get_ilist_inputs(ilist):
+    return [c.children()[0].name for c in ilist.children()[0].children()[1:]]
 
 def verilog_zip(moddef, gate_type, signals1, signals2, name):
     gates = [None] * len(signals1)
