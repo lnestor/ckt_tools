@@ -1,1 +1,15 @@
-benchmarks/iscas/c1355/key_block/mux/p1_h2_b5_m3.v,108.509760,52,1
+benchmarks/iscas/c1355/key_block/mux/p1_h2_b5_m1.v,19.811647,16,1
+benchmarks/iscas/c1355/key_block/mux/p1_h2_b5_m2.v,49.257798,28,1
+benchmarks/iscas/c1355/key_block/mux/p1_h2_b5_m3.v,155.011907,52,1
+benchmarks/iscas/c1355/key_block/mux/p1_h2_b5_m4.v,575.133510,104,1
+benchmarks/iscas/c1355/key_block/mux/p1_h2_b5_m5.v,2662.254545,227,1
+benchmarks/iscas/c1355/key_block/mux/p5_h2_b5_m1.v,9.644636,10,1
+benchmarks/iscas/c1355/key_block/mux/p5_h2_b5_m2.v,31.471465,21,1
+benchmarks/iscas/c1355/key_block/mux/p5_h2_b5_m3.v,94.396996,39,1
+benchmarks/iscas/c1355/key_block/mux/p5_h2_b5_m4.v,466.624607,91,1
+benchmarks/iscas/c1355/key_block/mux/p5_h2_b5_m5.v,1754.195964,179,1
+benchmarks/iscas/c1355/key_block/mux/p9_h2_b5_m1.v,3.048905,4,1
+benchmarks/iscas/c1355/key_block/mux/p9_h2_b5_m2.v,7.218366,8,1
+benchmarks/iscas/c1355/key_block/mux/p9_h2_b5_m3.v,20.665891,16,1
+benchmarks/iscas/c1355/key_block/mux/p9_h2_b5_m4.v,138.811528,47,1
+benchmarks/iscas/c1355/key_block/mux/p9_h2_b5_m5.v,355.419912,77,1
