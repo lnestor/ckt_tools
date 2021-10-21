@@ -10,6 +10,19 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 import ver2bench
 from bench import BenchFile
 
+def get_args():
+    parser = argparse.ArgumentParser(description="Calculate p(prop) for a circuit")
+    parser.add_argument("verilog", help="The verilog file")
+    parser.add_argument("locked", help="The locked verilog file")
+    parser.add_argument("node", help="The node where the key is implemented")
+    parser.add_argument("-p", "--percentage", type=float, help="The percentage of input patterns to use to estimate p(prop). Cannot be used with --number.")
+    parser.add_argument("-n", "--number", type=int, help="The number of input patterns to use to estimate p(prop). Cannot be used with --percentage.")
+
+    args = parser.parse_args()
+    verify(args)
+
+    return args
+
 def verify(args):
     if args.percentage is not None and args.number is not None:
         print("Error: cannot use --percentage and --number together")
@@ -127,15 +140,7 @@ def get_key_patterns(base_fname, input_pattern, i):
     return list(set(key_patterns))
 
 def main():
-    parser = argparse.ArgumentParser(description="Calculate p(prop) for a circuit")
-    parser.add_argument("verilog", help="The verilog file")
-    parser.add_argument("locked", help="The locked verilog file")
-    parser.add_argument("node", help="The node where the key is implemented")
-    parser.add_argument("-p", "--percentage", type=float, help="The percentage of input patterns to use to estimate p(prop). Cannot be used with --number.")
-    parser.add_argument("-n", "--number", type=int, help="The number of input patterns to use to estimate p(prop). Cannot be used with --percentage.")
-
-    args = parser.parse_args()
-    verify(args)
+    args = get_args()
 
     # I think this fails when there are logical constants in the verilog
     print("\nFinding p(prop) for %s" % args.locked)
