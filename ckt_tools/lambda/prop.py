@@ -10,6 +10,20 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 import ver2bench
 from bench import BenchFile
 
+def verify(args):
+    if args.percentage is not None and args.number is not None:
+        print("Error: cannot use --percentage and --number together")
+        sys.exit(-1)
+
+def sample_number(input_patterns, args):
+    if args.percentage:
+        return math.ceil(args.percentage * len(input_patterns))
+    else:
+        return args.number
+
+def get_sample(input_patterns, number):
+    return random.sample(input_patterns, number)
+
 def clean(fname):
     os.remove(fname)
 
@@ -117,9 +131,14 @@ def main():
     parser.add_argument("verilog", help="The verilog file")
     parser.add_argument("locked", help="The locked verilog file")
     parser.add_argument("node", help="The node where the key is implemented")
-    parser.add_argument("-p", "--percentage", type=float, help="The percentage of input patterns to use to estimate p(prop)")
+    parser.add_argument("-p", "--percentage", type=float, help="The percentage of input patterns to use to estimate p(prop). Cannot be used with --number.")
+    parser.add_argument("-n", "--number", type=int, help="The number of input patterns to use to estimate p(prop). Cannot be used with --percentage.")
 
     args = parser.parse_args()
+    verify(args)
+
+    # I think this fails when there are logical constants in the verilog
+    print("\nFinding p(prop) for %s" % args.locked)
 
     base_fname = os.path.splitext(os.path.basename(args.verilog))[0]
     bench_fname = "%s_tmp.bench" % base_fname
@@ -129,16 +148,18 @@ def main():
     create_bench_file(locked_fname, args.locked)
 
     input_patterns = get_input_patterns(base_fname, args.node)
+    print("%i input patterns found to propagate %s" % (len(input_patterns), args.node))
 
     pprops = []
-    sample = random.sample(input_patterns, math.ceil(args.percentage * len(input_patterns)))
+    print("Sampling %i input patterns" % sample_number(input_patterns, args))
+    sample = get_sample(input_patterns, sample_number(input_patterns, args))
     for i, pattern in enumerate(sample):
         key_patterns = get_key_patterns(base_fname, pattern, i)
         pprop = len(key_patterns) / 2**len(key_patterns[0])
         pprops.append(pprop)
 
     avg_pprop = sum(pprops) / len(pprops)
-    print(avg_pprop)
+    print("\nEstimated p(prop): %.5f\n" % avg_pprop)
 
     clean(bench_fname)
     clean(locked_fname)
