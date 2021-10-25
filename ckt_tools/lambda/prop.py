@@ -31,8 +31,10 @@ def verify(args):
 def sample_number(input_patterns, args):
     if args.percentage:
         return math.ceil(args.percentage * len(input_patterns))
-    else:
+    elif args.number:
         return args.number
+    else:
+        return len(input_patterns)
 
 def get_sample(input_patterns, number):
     return random.sample(input_patterns, number)
@@ -67,6 +69,7 @@ def parse_test_patterns(pattern_fname, node):
     for i, line in enumerate(lines):
         if line.startswith(node):
             start = i
+            break
 
     patterns = []
     for line in [l for l in lines[start:] if not l.startswith(node)]:
@@ -85,6 +88,10 @@ def synthesize(bench_fname, locked_bench_fname, output_fname, pattern):
     bench.recursive_rm("mask_output")
     bench.remove_gate("flipped_signal")
     bench.add_gate("flipped_signal = buf(signal_from_circuit)")
+
+    # bench.recursive_rm("key_block_output")
+    # bench.remove_gate("flipped_signal")
+    # bench.add_gate("flipped_signal = buf(unmodified_output)")
 
     bench.add_input("TF_CONST")
     bench.add_gate("TF_CONST_NOT = not(TF_CONST)")

@@ -1,3 +1,5 @@
+from floating import find_floating
+
 class BenchFile:
     def __init__(self, filename):
         self.filename = filename
@@ -39,26 +41,9 @@ class BenchFile:
         for output, gate in self.gates.items():
             gate.inputs = [pattern_map.get(i, i) for i in gate.inputs]
 
-    def __str__(self):
-        s = ""
-        s += "# %s\n" % self.filename
-        s += "#\n"
-
-        s += "\n"
-        for i in self.inputs:
-            s += "INPUT(%s)\n" % i
-
-        s += "\n"
-        for o in self.outputs:
-            s += "OUTPUT(%s)\n" % o
-
-        s += "\n"
-        for output, gate in self.gates.items():
-            s += "%s\n" % gate
-
-        return s
-
     def write(self, filename):
+        floating = find_floating(self.outputs, self.gates)
+
         with open(filename, "w") as f:
             f.write("# %s\n" % filename)
             f.write("#\n")
@@ -73,7 +58,8 @@ class BenchFile:
 
             f.write("\n")
             for output, gate in self.gates.items():
-                f.write("%s\n" % gate)
+                if output not in floating:
+                    f.write("%s\n" % gate)
 
     def _parse(self, filename):
         with open(filename) as f:
@@ -91,6 +77,28 @@ class BenchFile:
             else:
                 gate = Gate(line)
                 self.gates[gate.output] = gate
+
+    def __str__(self):
+        floating = find_floating(self.outputs, self.gates)
+
+        s = ""
+        s += "# %s\n" % self.filename
+        s += "#\n"
+
+        s += "\n"
+        for i in self.inputs:
+            s += "INPUT(%s)\n" % i
+
+        s += "\n"
+        for o in self.outputs:
+            s += "OUTPUT(%s)\n" % o
+
+        s += "\n"
+        for output, gate in self.gates.items():
+            if output not in floating:
+                s += "%s\n" % gate
+
+        return s
 
 class Gate:
     def __init__(self, line):

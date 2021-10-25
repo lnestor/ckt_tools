@@ -52,6 +52,7 @@ def add_mux(moddef, portnames, selector, count):
     mux_or = create_ilist(moddef, "or", "G_mux%i_or" % count, output, ["mux%i_and_0" % count, "mux%i_and_1" % count], add_wire=False)
 
     return mux_or
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Add an Anti-SAT block to a circuit.")
     parser.add_argument("verilog_file", help="The circuit's verilog file.")

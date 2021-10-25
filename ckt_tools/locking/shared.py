@@ -100,7 +100,13 @@ def get_ilist_name(ilist):
     return ilist.children()[0].children()[0].children()[0].name
 
 def get_ilist_inputs(ilist):
-    return [c.children()[0].name for c in ilist.children()[0].children()[1:]]
+    def get_val(c):
+        if isinstance(c.children()[0], vast.IntConst):
+            return c.children()[0].value
+        else:
+            return c.children()[0].name
+
+    return [get_val(c) for c in ilist.children()[0].children()[1:]]
 
 def verilog_zip(moddef, gate_type, signals1, signals2, name):
     gates = [None] * len(signals1)

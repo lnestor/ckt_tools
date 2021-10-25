@@ -23,12 +23,38 @@ def print_outputs(outputs):
     return rslt
 
 def print_gates(moddef):
+    add_false_const = False
+    add_true_const = False
+    const_map = {"0": "FALSE_CONST", "1": "TRUE_CONST"}
+
     rslt = "\n"
     for ilist in get_ilists(moddef):
         module = ilist.module
         output = get_ilist_name(ilist)
-        inputs = get_ilist_inputs(ilist)
+        inputs = [const_map.get(i, i) for i in get_ilist_inputs(ilist)]
+
         rslt += "%s = %s(%s)\n" % (output, module, ", ".join(inputs))
+
+        if "FALSE_CONST" in inputs:
+            add_false_const = True
+        if "TRUE_CONST" in inputs:
+            add_true_const = True
+
+    if add_false_const or add_true_const:
+        rslt += add_consts(add_false_const, add_true_const)
+
+    return rslt
+
+def add_consts(add_false_const, add_true_const):
+    rslt = ""
+    rslt += "INPUT(TF_CONST)\n"
+    rslt += "TF_CONST_NOT = not(TF_CONST)\n"
+
+    if add_false_const:
+        rslt += "FALSE_CONST = and(TF_CONST, TF_CONST_NOT)\n"
+    if add_true_const:
+        rslt += "TRUE_CONST = nand(TF_CONST, TF_CONST_NOT)\n"
+
     return rslt
 
 def convert(verilog, output):
