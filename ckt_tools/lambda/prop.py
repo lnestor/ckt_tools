@@ -62,7 +62,7 @@ def parse_pattern(line):
     pattern = pattern.split()[0]
     return pattern
 
-def parse_test_patterns(pattern_fname, node):
+def parse_test_patterns(pattern_fname, node, replace_dont_cares=False):
     with open(pattern_fname) as f:
         lines = f.readlines()
 
@@ -73,7 +73,11 @@ def parse_test_patterns(pattern_fname, node):
 
     patterns = []
     for line in [l for l in lines[start:] if not l.startswith(node)]:
-        test_pattern = parse_pattern(line).replace("x", "0")
+        test_pattern = parse_pattern(line)
+
+        if replace_dont_cares:
+            test_pattern = parse_pattern(line).replace("x", "0")
+
         patterns.append(test_pattern)
 
     return patterns
@@ -85,12 +89,14 @@ def synthesize(bench_fname, locked_bench_fname, output_fname, pattern):
     bench.clear_inputs(inputs)
 
     # Don't hardcode these
+    # bench.recursive_rm("mask_output")
+    # bench.remove_gate("flipped_signal")
+    # bench.add_gate("flipped_signal = buf(signal_from_circuit)")
+
+    # bench.recursive_rm("key_block_output")
     bench.recursive_rm("mask_output")
     bench.remove_gate("flipped_signal")
     bench.add_gate("flipped_signal = buf(signal_from_circuit)")
-
-    # bench.recursive_rm("key_block_output")
-    # bench.remove_gate("flipped_signal")
     # bench.add_gate("flipped_signal = buf(unmodified_output)")
 
     bench.add_input("TF_CONST")
@@ -116,7 +122,7 @@ def get_input_patterns(base_fname, node):
 
     create_fault_file(fault_fname, node)
     run_atalanta(bench_fname, fault_fname, log_fname)
-    test_patterns = parse_test_patterns(pattern_fname, node)
+    test_patterns = parse_test_patterns(pattern_fname, node, replace_dont_cares=True) # Don't replace, expand
 
     clean(fault_fname)
     clean(log_fname)
@@ -136,15 +142,22 @@ def get_key_patterns(base_fname, input_pattern, i):
     # Don't hardcode flipped signal
     create_fault_file(fault_fname, "flipped_signal")
     run_atalanta(output_fname, fault_fname, log_fname)
-    key_patterns = parse_test_patterns(pattern_fname, "flipped_signal")
-    key_patterns = [p[0:-1] for p in key_patterns]
+    key_patterns = parse_test_patterns(pattern_fname, "flipped_signal", replace_dont_cares=False)
+    key_patterns = list(set([p[0:-1] for p in key_patterns]))
+
+    num_patterns = 0
+    for pattern in key_patterns:
+        dont_cares = pattern.count("x")
+        num_patterns += 2**dont_cares
+    # import pdb; pdb.set_trace()
 
     clean(output_fname)
     clean(fault_fname)
     clean(log_fname)
     clean(pattern_fname)
 
-    return list(set(key_patterns))
+    return num_patterns, key_patterns[0]
+    # return list(set(key_patterns))
 
 def main():
     args = get_args()
@@ -166,8 +179,10 @@ def main():
     print("Sampling %i input patterns" % sample_number(input_patterns, args))
     sample = get_sample(input_patterns, sample_number(input_patterns, args))
     for i, pattern in enumerate(sample):
-        key_patterns = get_key_patterns(base_fname, pattern, i)
-        pprop = len(key_patterns) / 2**len(key_patterns[0])
+        num_patterns, single_pattern = get_key_patterns(base_fname, pattern, i)
+        pprop = num_patterns / 2**len(single_pattern)
+        # pprop = len(key_patterns) / 2**len(key_patterns[0])
+        # print(pprop)
         pprops.append(pprop)
 
     avg_pprop = sum(pprops) / len(pprops)
