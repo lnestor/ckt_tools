@@ -1,26 +1,41 @@
 from floating import find_floating
+from parsing.bench import parse_bench
+from parsing.verilog import parse_verilog
+from parsing.gate import Gate
+
+import os
+
+TF_INPUT_NAME = "TF_CONST"
+TF_NEG_NAME = "TF_CONST_NOT"
+TRUE = "TRUE_CONST"
+FALSE = "FALSE_CONST"
 
 class BenchFile:
     def __init__(self, filename):
         self.filename = filename
-        self.inputs = []
-        self.outputs = []
-        self.gates = {}
 
-        self._parse(filename)
+        _, extension = os.path.splitext(filename)
+
+        if extension == ".bench":
+            self.inputs, self.outputs, self.gates = parse_bench(filename)
+        elif extension == ".v":
+            self.inputs, self.outputs, self.gates = parse_verilog(filename)
+        else:
+            print("Error: unknown file extension %s in BenchFile" % filename)
+            exit(-1)
 
     def add_input(self, i):
         self.inputs.append(i)
 
-    def clear_inputs(self, inputs=None):
+    def remove_inputs(self, inputs=None):
         if inputs is None:
             self.inputs = []
         else:
             self.inputs = [i for i in self.inputs if not i in inputs]
 
-    def add_gate(self, line):
-        gate = Gate(line)
-        self.gates[gate.output] = gate
+    def add_gate(self, output, gate_type, inputs):
+        gate = Gate(output, gate_type, inputs)
+        self.gates[output] = gate
 
     def remove_gate(self, node):
         del self.gates[node]
@@ -37,9 +52,27 @@ class BenchFile:
 
             del self.gates[node]
 
-    def apply_pattern(self, pattern_map):
+    def apply_pattern(self, inputs, pattern):
+        # Create T/F constants
+        self.add_input(TF_INPUT_NAME)
+        self.add_gate(TF_NEG_NAME, "not", [TF_INPUT_NAME])
+
+        if "0" in pattern:
+            self.add_gate(FALSE, "and", [TF_INPUT_NAME, TF_NEG_NAME])
+        if "1" in pattern:
+            self.add_gate(TRUE, "nand", [TF_INPUT_NAME, TF_NEG_NAME])
+
+        def tf_val(s):
+            return FALSE if s == "0" else TRUE
+
+        pattern_map = {name: tf_val(val) for name, val in zip(inputs, pattern)}
+
         for output, gate in self.gates.items():
             gate.inputs = [pattern_map.get(i, i) for i in gate.inputs]
+
+    # def apply_pattern(self, pattern_map):
+    #     for output, gate in self.gates.items():
+    #         gate.inputs = [pattern_map.get(i, i) for i in gate.inputs]
 
     def write(self, filename):
         floating = find_floating(self.outputs, self.gates)
@@ -60,23 +93,6 @@ class BenchFile:
             for output, gate in self.gates.items():
                 if output not in floating:
                     f.write("%s\n" % gate)
-
-    def _parse(self, filename):
-        with open(filename) as f:
-            lines = f.readlines()
-
-        for line in lines:
-            if line.startswith("#"):
-                continue
-            elif line.strip() == "":
-                continue
-            elif line.startswith("INPUT"):
-                self.inputs.append(line[line.find("(") + 1:line.find(")")])
-            elif line.startswith("OUTPUT"):
-                self.outputs.append(line[line.find("(") + 1:line.find(")")])
-            else:
-                gate = Gate(line)
-                self.gates[gate.output] = gate
 
     def __str__(self):
         floating = find_floating(self.outputs, self.gates)
@@ -99,15 +115,3 @@ class BenchFile:
                 s += "%s\n" % gate
 
         return s
-
-class Gate:
-    def __init__(self, line):
-        self.output = line.split("=")[0].strip()
-        self.type = line.split("=")[1].split("(")[0].strip()
-        self.inputs = [l.strip() for l in line[line.find("(") + 1:line.find(")")].split(",")]
-
-    def __str__(self):
-        return "%s = %s(%s)" % (self.output, self.type, ", ".join(self.inputs))
-
-    def __repr__(self):
-        return "%s = %s(%s)" % (self.output, self.type, ", ".join(self.inputs))

@@ -1,0 +1,10 @@
+---
+oracle: benchmarks/iscas/c1355.v
+node: G1348
+number-samples: 1000
+key-block-output: "mask_output"
+key-gate-output: "flipped_signal"
+original-signal-name: "signal_from_circuit"
+
+# Eventually we will want to have multiple node sections where each
+# section has a node, etc.
